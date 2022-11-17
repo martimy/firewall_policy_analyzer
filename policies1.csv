@@ -1,0 +1,14 @@
+protocol,src,s_port,dst,d_port,action
+tcp, 140.192.37.20, any, 0.0.0.0/0, 80, deny
+tcp, 140.192.37.0/24, any, 0.0.0.0/0, 80, accept
+tcp, 0.0.0.0/0, any, 161.120.33.40, 80, accept
+tcp, 140.192.37.0/24, any, 161.120.33.40, 80, deny
+tcp, 140.192.37.30, any, 0.0.0.0/0, 21, deny
+tcp, 140.192.37.0/24, any, 0.0.0.0/0, 21, accept
+tcp, 140.192.37.0/24, any, 161.120.33.40, 21, accept
+tcp, 0.0.0.0/0, any, 0.0.0.0/0, any, deny
+udp, 140.192.37.0/24, any, 161.120.33.40, 53, accept
+udp, 0.0.0.0/0, any, 161.120.33.40, 53, accept
+udp, 140.192.38.0/24, any, 161.120.35.0/24, any, accept
+udp, 0.0.0.0/0, any, 0.0.0.0/0, any, deny
+ip, 0.0.0.0/0, any, 0.0.0.0/0, any, deny
