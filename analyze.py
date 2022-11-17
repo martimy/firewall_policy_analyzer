@@ -42,7 +42,7 @@ anom = analyzer.get_anomalies()
 
 policies_st(policies)
 anomalies_st(anom)
- 
+
 
 
 print("=" * 50)
@@ -52,3 +52,20 @@ packet = Packet('tcp', '0.0.0.0/0', 'any', '161.120.33.40', '80')
 packet = Packet('tcp', '140.192.37.0/24', 'any', '161.120.33.40', '80')
 result = analyzer.get_first_match(packet)
 print(result)
+
+
+####
+num = len(reader)
+print(num)
+relations = {}  # cols
+for y_rule in anom:
+    # create a col of None 
+    col = [None] * num
+    anom_list = anom[y_rule]
+    for t in anom_list:
+        # anom tuple
+        x_rule, relation = t
+        col[x_rule] = relation
+    relations[y_rule] = col
+
+print(relations)
