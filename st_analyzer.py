@@ -41,7 +41,7 @@ udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 desc = {
     "GEN": {"short": "Generalization",
             "long": "generalizes",
-            "rec": "No changes is required.",
+            "rec": "No change is required.",
             "def": """A rule is a generalization of a preceding rule if
             they have different actions, and the first rule can match all
             the packets that match the second rule."""},
