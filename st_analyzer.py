@@ -42,15 +42,14 @@ DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they
 have different actions, and if rule (Y) can match all the packets that 
 match rule (X)."""
 
-DEF_RUD = """A rule (X) is redundant if it performs the same action on the 
+DEF_RXD = """A rule (X) is redundant if it performs the same action on the 
 same packets as a following rule (Y), and if rule (Y) can match all the packets 
 that match rule (X), except when there is an intermidate rule (Z) 
 that relates to (X) but with different action."""
 
 DEF_RYD = """A rule (Y) is redundant if it performs the same action on the 
 same packets as a preceding rule (X), and if rule (X) can match all the packets 
-that match rule (Y), except when there is an intermidate rule (Z) 
-that relates to (X) but with different action."""
+that match rule (Y)."""
 
 DEF_SHD = """A rule (Y) is shadowed by a previous rule (X) if the they have 
 different actions, and if rule (X) matches all the packets that match rule (Y), 
@@ -73,10 +72,10 @@ desc = {
             "long": "corrolates with",
             "rec": "Verify correctness.",
             "def": DEF_COR},
-    "RUD": {"short": "Redundancy X",
+    "RXD": {"short": "Redundancy X",
             "long": "is a superset of",
             "rec": "Remove rule X.",
-            "def": DEF_RUD},
+            "def": DEF_RXD},
     "RYD": {"short": "Redundancy Y",
             "long": "is a subset of",
             "rec": "Remove rule Y",
@@ -84,13 +83,15 @@ desc = {
 }
 
 TITLE = "Firewall Policy Analyzer"
-ABOUT = "Analyze a set of firewall policies and detect any anomalies."
-NO_RELATION = "No anomalies detected."
+ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.
+
+:warning: Use at your own risk."""
+NO_RELATION = ":heavy_check_mark: No anomalies detected."
 EXAMPLE_HELP = "Use built-in example file to demo the app."
 SELECT_RULES = "Select rules to review relationships."
 UPLOAD_FILE = "Upload a file"
 
-errors = ['SHD', 'RYD', 'RUD']
+errors = ['SHD', 'RYD', 'RXD']
 warn = ['COR']
 
 
@@ -119,7 +120,7 @@ def to_dict(rel_dict):
 
 st.title(TITLE)
 with st.expander("About", expanded=True):
-    st.write(ABOUT)
+    st.markdown(ABOUT)
 
 uploaded_file = st.file_uploader('Upload rules file')
 use_example = st.checkbox('Use example file', value=False, help=EXAMPLE_HELP)
@@ -165,7 +166,7 @@ if uploaded_file is not None:
         with c1:
             st.metric('SHD', count['SHD'], help=desc['SHD']['short'])
         with c2:
-            st.metric('RUD', count['RUD'], help=desc['RUD']['short'])
+            st.metric('RXD', count['RXD'], help=desc['RXD']['short'])
         with c3:
             st.metric('RYD', count['RYD'], help=desc['RYD']['short'])
         with c4:
@@ -182,7 +183,7 @@ if uploaded_file is not None:
         else:
             st.dataframe(pdr, use_container_width=True)
     else:
-        st.write(NO_RELATION)
+        st.markdown(NO_RELATION)
 
 # Analysis Section
 
@@ -223,6 +224,6 @@ if uploaded_file is not None:
             st.markdown(xy_recom)
 
     else:
-        st.write(NO_RELATION)
+        st.markdown(NO_RELATION)
 else:
     st.error(UPLOAD_FILE)

@@ -61,7 +61,7 @@ class Anomaly(Enum):
     SHD = 1  # shadowing
     COR = 2  # corrolation
     RYD = 3  # redundancy: x is a superset of y
-    RUD = 4  # redundancy: x is a supset of y
+    RXD = 4  # redundancy: x is a supset of y
     GEN = 5  # generalization
 
     def __str__(self):

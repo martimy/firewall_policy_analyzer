@@ -205,7 +205,7 @@ class PolicyAnalyzer():
         (RRule.CC, False): Anomaly.COR,
         (RRule.IMP, True): Anomaly.RYD,
         (RRule.EM, True): Anomaly.RYD,
-        (RRule.IMB, True): Anomaly.RUD
+        (RRule.IMB, True): Anomaly.RXD
     }
 
     def __init__(self, policies):
@@ -238,7 +238,7 @@ class PolicyAnalyzer():
         for ry, ry_relations in rule_relations.items():
             for rx, relation in ry_relations:
                 anamoly = self._get_anamoly(relation, a_relations[ry][rx])
-                if anamoly is Anomaly.RUD:
+                if anamoly is Anomaly.RXD:
                     # check the rules in between for additional conditions
                     for rz in range(rx+1, ry):
                         if any(a == rx and not a_relations[rz][rx]
