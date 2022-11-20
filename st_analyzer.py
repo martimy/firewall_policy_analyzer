@@ -38,25 +38,25 @@ udp,140.192.38.0/24,any,161.120.35.0/24,any,accept
 udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 
 
-DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they 
-have different actions, and if rule (Y) can match all the packets that 
+DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they
+have different actions, and if rule (Y) can match all the packets that
 match rule (X)."""
 
-DEF_RXD = """A rule (X) is redundant if it performs the same action on the 
-same packets as a following rule (Y), and if rule (Y) can match all the packets 
-that match rule (X), except when there is an intermidate rule (Z) 
+DEF_RXD = """A rule (X) is redundant if it performs the same action on the
+same packets as a following rule (Y), and if rule (Y) can match all the packets
+that match rule (X), except when there is an intermidate rule (Z)
 that relates to (X) but with different action."""
 
-DEF_RYD = """A rule (Y) is redundant if it performs the same action on the 
-same packets as a preceding rule (X), and if rule (X) can match all the packets 
+DEF_RYD = """A rule (Y) is redundant if it performs the same action on the
+same packets as a preceding rule (X), and if rule (X) can match all the packets
 that match rule (Y)."""
 
-DEF_SHD = """A rule (Y) is shadowed by a previous rule (X) if the they have 
-different actions, and if rule (X) matches all the packets that match rule (Y), 
+DEF_SHD = """A rule (Y) is shadowed by a previous rule (X) if the they have
+different actions, and if rule (X) matches all the packets that match rule (Y),
 such that the rule (Y) will never be reached."""
 
-DEF_COR = """Two rules (X) and (Y) are correlated if they have different 
-actions, and rule (X) matches some packets that match rule (Y) and 
+DEF_COR = """Two rules (X) and (Y) are correlated if they have different
+actions, and rule (X) matches some packets that match rule (Y) and
 rule (Y) matches some packets that match rule (X)."""
 
 desc = {
@@ -83,9 +83,8 @@ desc = {
 }
 
 TITLE = "Firewall Policy Analyzer"
-ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.
-
-:warning: Use at your own risk."""
+ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.  
+:warning: Work in progress. Use at your own risk. :warning:"""
 NO_RELATION = ":heavy_check_mark: No anomalies detected."
 EXAMPLE_HELP = "Use built-in example file to demo the app."
 SELECT_RULES = "Select rules to review relationships."
@@ -118,21 +117,44 @@ def to_dict(rel_dict):
     return my_dict
 
 
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv(index=False).encode('utf-8')
+
+# %% Start the app
+
+
 st.title(TITLE)
 with st.expander("About", expanded=True):
     st.markdown(ABOUT)
 
 uploaded_file = st.file_uploader('Upload rules file')
-use_example = st.checkbox('Use example file', value=False, help=EXAMPLE_HELP)
-if use_example:
-    uploaded_file = StringIO(EXAMPE_RULES)
 
+o1, o2 = st.columns(2)
+
+with o1:
+    show_ex = uploaded_file is not None
+    use_example = st.checkbox('Use example file', value=False, disabled=show_ex, help=EXAMPLE_HELP)
+    if use_example:
+        uploaded_file = StringIO(EXAMPE_RULES)
+with o2:
+    show_ed = 'edited' not in st.session_state
+    use_edited = st.checkbox('Use edited rules', value=False, disabled=show_ed)
+    if use_edited:
+        edited_file = st.session_state['edited']
+        uploaded_file = StringIO(edited_file)
+    
 if uploaded_file is not None:
     # Create a DataFrame from a csv file
     reader = pd.read_csv(uploaded_file)
 
     with st.expander("See Rules"):
         st.dataframe(reader, use_container_width=True)
+
+    if use_edited:
+        csv = convert_df(reader)
+        st.download_button(label="Download rules",
+                            data=csv, file_name='new_rules.csv', mime='text/csv')
 
     # Convert DataFrame to list to perfrom analysis
     rules = reader.values.tolist()
@@ -155,7 +177,7 @@ if uploaded_file is not None:
     pdr = pd.DataFrame.from_dict(relations)\
         .transpose().dropna(axis=1, how='all').fillna('')
 
-# Summary Section
+# %% Summary Section
 
     st.header('Summary')
     if not pdr.empty:
@@ -185,7 +207,7 @@ if uploaded_file is not None:
     else:
         st.markdown(NO_RELATION)
 
-# Analysis Section
+# %% Analysis Section
 
     # If relations are detected
     st.header("Analysis")
@@ -222,6 +244,34 @@ if uploaded_file is not None:
                 st.markdown(xy_def)
             st.markdown('#### Recommendation')
             st.markdown(xy_recom)
+
+# %% Editing Section
+
+        if acode in errors:
+            placeholder = st.empty()
+            apply = placeholder.button(
+                "Apply Recommendation", disabled=False, key=1)
+
+            if apply:
+                placeholder.empty()
+                newdf = reader.copy()
+                rules_list = reader.values.tolist()
+
+                if acode == "SHD" and apply:
+                    rules_list.insert(x_rule, rules_list[y_rule])
+                    del rules_list[y_rule+1]
+
+                if acode == "RXD" and apply:
+                    del rules_list[x_rule]
+
+                if acode == "RYD" and apply:
+                    del rules_list[y_rule]
+                
+                newdf = pd.DataFrame(rules_list, columns=reader.columns)
+                # st.dataframe(newdf, use_container_width=True)
+                csv = convert_df(newdf)
+                st.session_state['edited'] = csv.decode("utf-8")
+                # st.experimental_rerun()
 
     else:
         st.markdown(NO_RELATION)
