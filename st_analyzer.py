@@ -139,7 +139,7 @@ with o1:
     if use_example:
         uploaded_file = StringIO(EXAMPE_RULES)
 with o2:
-    show_ed = ('edited' not in st.session_state) or (uploaded_file is not None)
+    show_ed = 'edited' not in st.session_state
     use_edited = st.checkbox('Use edited rules', value=False, disabled=show_ed)
     if use_edited:
         edited_file = st.session_state['edited']
@@ -271,6 +271,7 @@ if uploaded_file is not None:
                 newdf = pd.DataFrame(rules_list, columns=reader.columns)
                 csv = convert_df(newdf)
                 st.session_state['edited'] = csv.decode("utf-8")
+                st.experimental_rerun()
 
     else:
         st.markdown(NO_RELATION)
