@@ -18,10 +18,26 @@ limitations under the License.
 
 # A treamlit app that demonstrates the use of firewall policy analyzer
 
-
+from io import StringIO
 import pandas as pd
 import streamlit as st
 from policyanalyzer import Policy, PolicyAnalyzer
+
+example_rules = """protocol,src,s_port,dst,d_port,action
+tcp,140.192.37.20,any,0.0.0.0/0,80,deny
+tcp,140.192.37.0/24,any,0.0.0.0/0,80,accept
+tcp,0.0.0.0/0,any,161.120.33.40,80,accept
+tcp,140.192.37.0/24,any,161.120.33.40,80,deny
+tcp,140.192.37.30,any,0.0.0.0/0,21,deny
+tcp,140.192.37.0/24,any,0.0.0.0/0,21,accept
+tcp,140.192.37.0/24,any,161.120.33.40,21,accept
+tcp,0.0.0.0/0,any,0.0.0.0/0,any,deny
+udp,140.192.37.0/24,any,161.120.33.40,53,accept
+udp,0.0.0.0/0,any,161.120.33.40,53,accept
+udp,140.192.38.0/24,any,161.120.35.0/24,any,accept
+udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
+
+
 desc = {
     "GEN": "Generalization",
     "SHD": "Shadowing",
@@ -72,21 +88,20 @@ def to_dict(rel_dict):
 
 
 st.title('Firewall Policy Analyzer')
-st.write('Analyze a set of firewall policies and detect any anomalies.')
+with st.expander("About", expanded=True):
+    st.write('Analyze a set of firewall policies and detect any anomalies.')
 
-with st.sidebar:
-    uploaded_file = st.file_uploader('Upload a policies')
-    check_LEGEND = st.checkbox("Show legend", value=False)
-    if check_LEGEND:
-        st.markdown(LEGEND)
+uploaded_file = st.file_uploader('Upload rules file')
+use_example = st.checkbox('Use example file', value=False, 
+                          help="Use built-in example file to demo the app.")
+if use_example:
+    uploaded_file = StringIO(example_rules)
 
 if uploaded_file is not None:
     # Create a DataFrame from a csv file
     reader = pd.read_csv(uploaded_file)
-
-    show_original = st.checkbox('Show Rules', value=True)
-    if show_original:
-        st.header('Rules')
+   
+    with st.expander("See Rules"):
         st.dataframe(reader, use_container_width=True)
 
     # Convert DataFrame to list to perfrom analysis
@@ -110,10 +125,27 @@ if uploaded_file is not None:
     pdr = pd.DataFrame.from_dict(relations)\
         .transpose().dropna(axis=1, how='all').fillna('')
 
+## Summary Section 
+
     st.header('Summary')
     if not pdr.empty:
-        st.write(
-            'The following table shows a summary of relationships among the rules.')
+        st.write('Relationship count:')
+        
+        count = {k: pdr[pdr == k].count().sum() for k in desc}
+        c1, c2, c3, c4, c5 = st.columns(5)
+        with c1:
+            st.metric('SHD', count['SHD'], help=desc['SHD'])
+        with c2:
+            st.metric('RUD', count['RUD'], help=desc['RUD'])
+        with c3:
+            st.metric('RXD', count['RXD'], help=desc['RXD'])
+        with c4:
+            st.metric('COR', count['COR'], help=desc['COR'])
+        with c5:
+            st.metric('GEN', count['GEN'], help=desc['GEN'])
+
+        st.write('Relationship table:')
+
         use_colors = st.checkbox('Highlight Errors', value=False)
         if use_colors:
             st.dataframe(pdr.style.applymap(color_erros),
@@ -124,16 +156,12 @@ if uploaded_file is not None:
         st.write(
             "There are no relationships. This usually means the rule set has anomalies.")
 
-    # Filter
-    # df2 = pdr.where(pdr == "SHD", None)\
-    #     .dropna(axis=0, how='all').dropna(axis=1, how='all')\
-    #     .fillna('')
-    # st.write(df2)
+## Analysis Section 
 
     # If relations are detected
-    st.header("Details")
-
+    st.header("Analysis")        
     if len(anom_dict) > 0:
+        st.write('Select rules to review relationships.')
         col1, col2 = st.columns(2)
         with col1:
             # Select one of the Y rules
@@ -164,4 +192,4 @@ if uploaded_file is not None:
     else:
         st.write("No relations are found.")
 else:
-    st.error("upload file")
+    st.error("Upload a file")
