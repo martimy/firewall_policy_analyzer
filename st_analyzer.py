@@ -23,7 +23,7 @@ import pandas as pd
 import streamlit as st
 from policyanalyzer import Policy, PolicyAnalyzer
 
-example_rules = """protocol,src,s_port,dst,d_port,action
+EXAMPE_RULES = """protocol,src,s_port,dst,d_port,action
 tcp,140.192.37.20,any,0.0.0.0/0,80,deny
 tcp,140.192.37.0/24,any,0.0.0.0/0,80,accept
 tcp,0.0.0.0/0,any,161.120.33.40,80,accept
@@ -39,38 +39,38 @@ udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 
 
 desc = {
-    "GEN": {"short": "Generalization", 
+    "GEN": {"short": "Generalization",
             "long": "generalizes",
             "rec": "No changes is required.",
-            "def": """A rule is a generalization of a preceding rule if 
-            they have different actions, and the first rule can match all 
+            "def": """A rule is a generalization of a preceding rule if
+            they have different actions, and the first rule can match all
             the packets that match the second rule."""},
-    "SHD": {"short": "Shadowing", 
+    "SHD": {"short": "Shadowing",
             "long": "is shadowed by",
             "rec": "Move rule Y before X.",
-            "def": """A rule is shadowed when a previous rule matches all 
-            the packets that match this rule, such that the shadowed rule 
+            "def": """A rule is shadowed when a previous rule matches all
+            the packets that match this rule, such that the shadowed rule
             will never be activated."""},
-    "COR": {"short": "Corrolation", 
+    "COR": {"short": "Corrolation",
             "long": "corrolates with",
             "rec": "Verify correctness.",
-            "def": """Two rules are correlated if they have different 
-            filtering actions, and the first rule matches some packets 
-            that match the second rule, and the second rule matches some 
+            "def": """Two rules are correlated if they have different
+            filtering actions, and the first rule matches some packets
+            that match the second rule, and the second rule matches some
             packets that match the first rule."""},
-    "RUD": {"short": "Redundancy-T1", 
+    "RUD": {"short": "Redundancy-T1",
             "long": "is a superset of",
             "rec": "Remove rule X.",
-            "def": """A rule is redundant if there is another rule that 
-            produces the same matching and action such that if the redundant 
+            "def": """A rule is redundant if there is another rule that
+            produces the same matching and action such that if the redundant
             rule is removed, the security policy will not be affected"""},
-    "RXD": {"short": "Redundancy-T2", 
+    "RXD": {"short": "Redundancy-T2",
             "long": "is a subset of",
             "rec": "Remove rule Y",
-            "def": """A rule is redundant if there is another rule that 
-            produces the same matching and action such that if the redundant 
+            "def": """A rule is redundant if there is another rule that
+            produces the same matching and action such that if the redundant
             rule is removed, the security policy will not be affected"""}
-    }
+}
 
 
 errors = ['SHD', 'RXD', 'RUD']
@@ -106,15 +106,15 @@ with st.expander("About", expanded=True):
     st.write('Analyze a set of firewall policies and detect any anomalies.')
 
 uploaded_file = st.file_uploader('Upload rules file')
-use_example = st.checkbox('Use example file', value=False, 
+use_example = st.checkbox('Use example file', value=False,
                           help="Use built-in example file to demo the app.")
 if use_example:
-    uploaded_file = StringIO(example_rules)
+    uploaded_file = StringIO(EXAMPE_RULES)
 
 if uploaded_file is not None:
     # Create a DataFrame from a csv file
     reader = pd.read_csv(uploaded_file)
-   
+
     with st.expander("See Rules"):
         st.dataframe(reader, use_container_width=True)
 
@@ -139,12 +139,12 @@ if uploaded_file is not None:
     pdr = pd.DataFrame.from_dict(relations)\
         .transpose().dropna(axis=1, how='all').fillna('')
 
-## Summary Section 
+# Summary Section
 
     st.header('Summary')
     if not pdr.empty:
         st.write('Relationship count:')
-        
+
         count = {k: pdr[pdr == k].count().sum() for k in desc}
         c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
@@ -170,10 +170,10 @@ if uploaded_file is not None:
         st.write(
             "There are no relationships. This usually means the rule set has no anomalies.")
 
-## Analysis Section 
+# Analysis Section
 
     # If relations are detected
-    st.header("Analysis")        
+    st.header("Analysis")
     if len(anom_dict) > 0:
         st.write('Select rules to review relationships.')
         col1, col2 = st.columns(2)
@@ -196,14 +196,11 @@ if uploaded_file is not None:
 
             acode = anom_dict[y_rule][x_rule]
             xy_rel = desc[acode]['long']
-            # xy_rel = desc.get(anom_dict[y_rule][x_rule])['short']
-            # xy_desc = f'Rule **Y** ({y_rule}) {xy_rel} rule **X** ({x_rule}).'
-            # xy_recom = desc.get(anom_dict[y_rule][x_rule]['rec'], 'No recommondation.')
             xy_short = desc[acode]['short']
             xy_def = desc[acode]['def']
             xy_desc = f'Rule **Y** ({y_rule}) {xy_rel} rule **X** ({x_rule}).'
             xy_recom = desc[acode]['rec']
-            
+
             st.markdown(f"#### {xy_short}")
             st.markdown(xy_desc)
             with st.expander('Definition', expanded=False):
