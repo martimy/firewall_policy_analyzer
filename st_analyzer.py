@@ -39,25 +39,39 @@ udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 
 
 desc = {
-    "GEN": "Generalization",
-    "SHD": "Shadowing",
-    "COR": "Corrolation",
-    "RUD": "Redundancy (1)",
-    "RXD": "Redundancy (2)"}
+    "GEN": {"short": "Generalization", 
+            "long": "generalizes",
+            "rec": "No changes is required.",
+            "def": """A rule is a generalization of a preceding rule if 
+            they have different actions, and the first rule can match all 
+            the packets that match the second rule."""},
+    "SHD": {"short": "Shadowing", 
+            "long": "is shadowed by",
+            "rec": "Move rule Y before X.",
+            "def": """A rule is shadowed when a previous rule matches all 
+            the packets that match this rule, such that the shadowed rule 
+            will never be activated."""},
+    "COR": {"short": "Corrolation", 
+            "long": "corrolates with",
+            "rec": "Verify correctness.",
+            "def": """Two rules are correlated if they have different 
+            filtering actions, and the first rule matches some packets 
+            that match the second rule, and the second rule matches some 
+            packets that match the first rule."""},
+    "RUD": {"short": "Redundancy-T1", 
+            "long": "is a superset of",
+            "rec": "Remove rule X.",
+            "def": """A rule is redundant if there is another rule that 
+            produces the same matching and action such that if the redundant 
+            rule is removed, the security policy will not be affected"""},
+    "RXD": {"short": "Redundancy-T2", 
+            "long": "is a subset of",
+            "rec": "Remove rule Y",
+            "def": """A rule is redundant if there is another rule that 
+            produces the same matching and action such that if the redundant 
+            rule is removed, the security policy will not be affected"""}
+    }
 
-rel = {
-    "GEN": "generalizes",
-    "SHD": "is shadowed by",
-    "COR": "corrolates with",
-    "RUD": "is a superset of",
-    "RXD": "is a subset of"}
-
-rec = {
-    "GEN": "No changes is required.",
-    "SHD": "Move rule Y before X.",
-    "COR": "Verify correctness.",
-    "RUD": "Remove rule X.",
-    "RXD": "Remove rule Y"}
 
 errors = ['SHD', 'RXD', 'RUD']
 warn = ['COR']
@@ -67,11 +81,11 @@ LEGEND = '-' + '-'.join([f' {k}: {v}  \n'for k, v in desc.items()])
 def color_erros(val):
     """Return style color for errors and warnnings"""
 
-    fcolor = 'white' if val in errors else None
-    bcolor = 'red' if val in errors else 'orange' if val in warn else None
+    fcolor = 'red' if val in errors else 'orange' if val in warn else None
+    # bcolor = 'red' if val in errors else 'orange' if val in warn else None
 
-    style = f'background-color: {bcolor};' if bcolor else ''
-    style += f'color: {fcolor};' if fcolor else ''
+    # style = f'background-color: {bcolor};' if bcolor else ''
+    style = f'color: {fcolor};' if fcolor else ''
     return style
 
 
@@ -134,15 +148,15 @@ if uploaded_file is not None:
         count = {k: pdr[pdr == k].count().sum() for k in desc}
         c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
-            st.metric('SHD', count['SHD'], help=desc['SHD'])
+            st.metric('SHD', count['SHD'], help=desc['SHD']['short'])
         with c2:
-            st.metric('RUD', count['RUD'], help=desc['RUD'])
+            st.metric('RUD', count['RUD'], help=desc['RUD']['short'])
         with c3:
-            st.metric('RXD', count['RXD'], help=desc['RXD'])
+            st.metric('RXD', count['RXD'], help=desc['RXD']['short'])
         with c4:
-            st.metric('COR', count['COR'], help=desc['COR'])
+            st.metric('COR', count['COR'], help=desc['COR']['short'])
         with c5:
-            st.metric('GEN', count['GEN'], help=desc['GEN'])
+            st.metric('GEN', count['GEN'], help=desc['GEN']['short'])
 
         st.write('Relationship table:')
 
@@ -154,7 +168,7 @@ if uploaded_file is not None:
             st.dataframe(pdr, use_container_width=True)
     else:
         st.write(
-            "There are no relationships. This usually means the rule set has anomalies.")
+            "There are no relationships. This usually means the rule set has no anomalies.")
 
 ## Analysis Section 
 
@@ -175,19 +189,27 @@ if uploaded_file is not None:
             x_rule = st.selectbox("Select X Rule", x_list)
 
         if y_rule:  # note that 0 === False
-
             st.dataframe(reader.iloc[[x_rule, y_rule]].
                          rename(index={x_rule: f'X ({x_rule})',
                                 y_rule: f'Y ({y_rule})'}),
                          use_container_width=True)
 
-            xy_rel = rel.get(anom_dict[y_rule][x_rule], '??')
+            acode = anom_dict[y_rule][x_rule]
+            xy_rel = desc[acode]['long']
+            # xy_rel = desc.get(anom_dict[y_rule][x_rule])['short']
+            # xy_desc = f'Rule **Y** ({y_rule}) {xy_rel} rule **X** ({x_rule}).'
+            # xy_recom = desc.get(anom_dict[y_rule][x_rule]['rec'], 'No recommondation.')
+            xy_short = desc[acode]['short']
+            xy_def = desc[acode]['def']
             xy_desc = f'Rule **Y** ({y_rule}) {xy_rel} rule **X** ({x_rule}).'
-            xy_recom = rec.get(anom_dict[y_rule][x_rule], 'No recommondation.')
-            xy_short = desc.get(anom_dict[y_rule][x_rule], 'No Description.')
-            st.markdown(
-                f"### {xy_short}\n- **Description:** {xy_desc}\
-                    \n- **Recommendation:** {xy_recom}")
+            xy_recom = desc[acode]['rec']
+            
+            st.markdown(f"#### {xy_short}")
+            st.markdown(xy_desc)
+            with st.expander('Definition', expanded=False):
+                st.markdown(xy_def)
+            st.markdown('### Recommendation')
+            st.markdown(xy_recom)
 
     else:
         st.write("No relations are found.")
