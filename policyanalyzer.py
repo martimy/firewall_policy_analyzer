@@ -203,8 +203,8 @@ class PolicyAnalyzer():
         (RRule.IMB, False): Anomaly.GEN,
         (RRule.IMP, False): Anomaly.SHD,
         (RRule.CC, False): Anomaly.COR,
-        (RRule.IMP, True): Anomaly.RXD,
-        (RRule.EM, True): Anomaly.RXD,
+        (RRule.IMP, True): Anomaly.RYD,
+        (RRule.EM, True): Anomaly.RYD,
         (RRule.IMB, True): Anomaly.RUD
     }
 

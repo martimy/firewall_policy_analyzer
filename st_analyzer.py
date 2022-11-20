@@ -47,7 +47,7 @@ same packets as a following rule (Y), and if rule (Y) can match all the packets
 that match rule (X), except when there is an intermidate rule (Z) 
 that relates to (X) but with different action."""
 
-DEF_RXD = """A rule (Y) is redundant if it performs the same action on the 
+DEF_RYD = """A rule (Y) is redundant if it performs the same action on the 
 same packets as a preceding rule (X), and if rule (X) can match all the packets 
 that match rule (Y), except when there is an intermidate rule (Z) 
 that relates to (X) but with different action."""
@@ -77,10 +77,10 @@ desc = {
             "long": "is a superset of",
             "rec": "Remove rule X.",
             "def": DEF_RUD},
-    "RXD": {"short": "Redundancy Y",
+    "RYD": {"short": "Redundancy Y",
             "long": "is a subset of",
             "rec": "Remove rule Y",
-            "def": DEF_RXD}
+            "def": DEF_RYD}
 }
 
 TITLE = "Firewall Policy Analyzer"
@@ -90,7 +90,7 @@ EXAMPLE_HELP = "Use built-in example file to demo the app."
 SELECT_RULES = "Select rules to review relationships."
 UPLOAD_FILE = "Upload a file"
 
-errors = ['SHD', 'RXD', 'RUD']
+errors = ['SHD', 'RYD', 'RUD']
 warn = ['COR']
 
 
@@ -167,7 +167,7 @@ if uploaded_file is not None:
         with c2:
             st.metric('RUD', count['RUD'], help=desc['RUD']['short'])
         with c3:
-            st.metric('RXD', count['RXD'], help=desc['RXD']['short'])
+            st.metric('RYD', count['RYD'], help=desc['RYD']['short'])
         with c4:
             st.metric('COR', count['COR'], help=desc['COR']['short'])
         with c5:

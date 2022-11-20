@@ -60,7 +60,7 @@ class Anomaly(Enum):
     AOK = 0  # no anomaly
     SHD = 1  # shadowing
     COR = 2  # corrolation
-    RXD = 3  # redundancy: x is a superset of y
+    RYD = 3  # redundancy: x is a superset of y
     RUD = 4  # redundancy: x is a supset of y
     GEN = 5  # generalization
 
