@@ -83,8 +83,8 @@ desc = {
 }
 
 TITLE = "Firewall Policy Analyzer"
-ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.
-:warning: Work in progress. Use at your own risk. :warning:"""
+ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.\n
+:warning: This is work in progress. Use at your own risk. :warning:"""
 NO_RELATION = ":heavy_check_mark: No anomalies detected."
 EXAMPLE_HELP = "Use built-in example file to demo the app."
 SELECT_RULES = "Select rules to review relationships."
