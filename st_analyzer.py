@@ -38,44 +38,60 @@ udp,140.192.38.0/24,any,161.120.35.0/24,any,accept
 udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 
 
+DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they 
+have different actions, and if rule (Y) can match all the packets that 
+match rule (X)."""
+
+DEF_RUD = """A rule (X) is redundant if it performs the same action on the 
+same packets as a following rule (Y), and if rule (Y) can match all the packets 
+that match rule (X), except when there is an intermidate rule (Z) 
+that relates to (X) but with different action."""
+
+DEF_RXD = """A rule (Y) is redundant if it performs the same action on the 
+same packets as a preceding rule (X), and if rule (X) can match all the packets 
+that match rule (Y), except when there is an intermidate rule (Z) 
+that relates to (X) but with different action."""
+
+DEF_SHD = """A rule (Y) is shadowed by a previous rule (X) if the they have 
+different actions, and if rule (X) matches all the packets that match rule (Y), 
+such that the rule (Y) will never be reached."""
+
+DEF_COR = """Two rules (X) and (Y) are correlated if they have different 
+actions, and rule (X) matches some packets that match rule (Y) and 
+rule (Y) matches some packets that match rule (X)."""
+
 desc = {
     "GEN": {"short": "Generalization",
             "long": "generalizes",
             "rec": "No change is required.",
-            "def": """A rule is a generalization of a preceding rule if
-            they have different actions, and the first rule can match all
-            the packets that match the second rule."""},
+            "def": DEF_GEN},
     "SHD": {"short": "Shadowing",
             "long": "is shadowed by",
             "rec": "Move rule Y before X.",
-            "def": """A rule is shadowed when a previous rule matches all
-            the packets that match this rule, such that the shadowed rule
-            will never be activated."""},
+            "def": DEF_SHD},
     "COR": {"short": "Corrolation",
             "long": "corrolates with",
             "rec": "Verify correctness.",
-            "def": """Two rules are correlated if they have different
-            filtering actions, and the first rule matches some packets
-            that match the second rule, and the second rule matches some
-            packets that match the first rule."""},
-    "RUD": {"short": "Redundancy-T1",
+            "def": DEF_COR},
+    "RUD": {"short": "Redundancy X",
             "long": "is a superset of",
             "rec": "Remove rule X.",
-            "def": """A rule is redundant if there is another rule that
-            produces the same matching and action such that if the redundant
-            rule is removed, the security policy will not be affected"""},
-    "RXD": {"short": "Redundancy-T2",
+            "def": DEF_RUD},
+    "RXD": {"short": "Redundancy Y",
             "long": "is a subset of",
             "rec": "Remove rule Y",
-            "def": """A rule is redundant if there is another rule that
-            produces the same matching and action such that if the redundant
-            rule is removed, the security policy will not be affected"""}
+            "def": DEF_RXD}
 }
 
+TITLE = "Firewall Policy Analyzer"
+ABOUT = "Analyze a set of firewall policies and detect any anomalies."
+NO_RELATION = "No anomalies detected."
+EXAMPLE_HELP = "Use built-in example file to demo the app."
+SELECT_RULES = "Select rules to review relationships."
+UPLOAD_FILE = "Upload a file"
 
 errors = ['SHD', 'RXD', 'RUD']
 warn = ['COR']
-LEGEND = '-' + '-'.join([f' {k}: {v}  \n'for k, v in desc.items()])
 
 
 def color_erros(val):
@@ -90,7 +106,7 @@ def color_erros(val):
 
 
 def to_dict(rel_dict):
-    """Convert anomalies to dictionary"""
+    """Convert anomalies lists to dictionary"""
 
     my_dict = {}
     for r_item in rel_dict:
@@ -101,13 +117,12 @@ def to_dict(rel_dict):
     return my_dict
 
 
-st.title('Firewall Policy Analyzer')
+st.title(TITLE)
 with st.expander("About", expanded=True):
-    st.write('Analyze a set of firewall policies and detect any anomalies.')
+    st.write(ABOUT)
 
 uploaded_file = st.file_uploader('Upload rules file')
-use_example = st.checkbox('Use example file', value=False,
-                          help="Use built-in example file to demo the app.")
+use_example = st.checkbox('Use example file', value=False, help=EXAMPLE_HELP)
 if use_example:
     uploaded_file = StringIO(EXAMPE_RULES)
 
@@ -167,15 +182,14 @@ if uploaded_file is not None:
         else:
             st.dataframe(pdr, use_container_width=True)
     else:
-        st.write(
-            "There are no relationships. This usually means the rule set has no anomalies.")
+        st.write(NO_RELATION)
 
 # Analysis Section
 
     # If relations are detected
     st.header("Analysis")
     if len(anom_dict) > 0:
-        st.write('Select rules to review relationships.')
+        st.write(SELECT_RULES)
         col1, col2 = st.columns(2)
         with col1:
             # Select one of the Y rules
@@ -205,10 +219,10 @@ if uploaded_file is not None:
             st.markdown(xy_desc)
             with st.expander('Definition', expanded=False):
                 st.markdown(xy_def)
-            st.markdown('### Recommendation')
+            st.markdown('#### Recommendation')
             st.markdown(xy_recom)
 
     else:
-        st.write("No relations are found.")
+        st.write(NO_RELATION)
 else:
-    st.error("Upload a file")
+    st.error(UPLOAD_FILE)
