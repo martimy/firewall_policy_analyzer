@@ -83,7 +83,7 @@ desc = {
 }
 
 TITLE = "Firewall Policy Analyzer"
-ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.  
+ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.
 :warning: Work in progress. Use at your own risk. :warning:"""
 NO_RELATION = ":heavy_check_mark: No anomalies detected."
 EXAMPLE_HELP = "Use built-in example file to demo the app."
@@ -99,7 +99,6 @@ def color_erros(val):
 
     fcolor = 'red' if val in errors else 'orange' if val in warn else None
     # bcolor = 'red' if val in errors else 'orange' if val in warn else None
-
     # style = f'background-color: {bcolor};' if bcolor else ''
     style = f'color: {fcolor};' if fcolor else ''
     return style
@@ -117,9 +116,10 @@ def to_dict(rel_dict):
     return my_dict
 
 
-def convert_df(df):
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv(index=False).encode('utf-8')
+def convert_df(data_frame):
+    """convert dataframe to csv"""
+
+    return data_frame.to_csv(index=False).encode('utf-8')
 
 # %% Start the app
 
@@ -134,16 +134,17 @@ o1, o2 = st.columns(2)
 
 with o1:
     show_ex = uploaded_file is not None
-    use_example = st.checkbox('Use example file', value=False, disabled=show_ex, help=EXAMPLE_HELP)
+    use_example = st.checkbox(
+        'Use example file', value=False, disabled=show_ex, help=EXAMPLE_HELP)
     if use_example:
         uploaded_file = StringIO(EXAMPE_RULES)
 with o2:
-    show_ed = 'edited' not in st.session_state
+    show_ed = ('edited' not in st.session_state) or (uploaded_file is not None)
     use_edited = st.checkbox('Use edited rules', value=False, disabled=show_ed)
     if use_edited:
         edited_file = st.session_state['edited']
         uploaded_file = StringIO(edited_file)
-    
+
 if uploaded_file is not None:
     # Create a DataFrame from a csv file
     reader = pd.read_csv(uploaded_file)
@@ -154,7 +155,7 @@ if uploaded_file is not None:
     if use_edited:
         csv = convert_df(reader)
         st.download_button(label="Download rules",
-                            data=csv, file_name='new_rules.csv', mime='text/csv')
+                           data=csv, file_name='new_rules.csv', mime='text/csv')
 
     # Convert DataFrame to list to perfrom analysis
     rules = reader.values.tolist()
@@ -266,12 +267,10 @@ if uploaded_file is not None:
 
                 if acode == "RYD" and apply:
                     del rules_list[y_rule]
-                
+
                 newdf = pd.DataFrame(rules_list, columns=reader.columns)
-                # st.dataframe(newdf, use_container_width=True)
                 csv = convert_df(newdf)
                 st.session_state['edited'] = csv.decode("utf-8")
-                # st.experimental_rerun()
 
     else:
         st.markdown(NO_RELATION)
