@@ -128,30 +128,35 @@ st.title(TITLE)
 with st.expander("About", expanded=True):
     st.markdown(ABOUT)
 
-uploaded_file = st.file_uploader('Upload rules file')
+# The firewall rules sources can be a file, a hardcoded example, or modified
+# rules after applying recommendations.
+rules_file = st.file_uploader('Upload rules file')
 
 o1, o2 = st.columns(2)
-
 with o1:
-    show_ex = uploaded_file is not None
+    # The checkbox is enabled when no file is uploaded
+    show_ex = rules_file is not None
     use_example = st.checkbox(
         'Use example file', value=False, disabled=show_ex, help=EXAMPLE_HELP)
     if use_example:
-        uploaded_file = StringIO(EXAMPE_RULES)
+        rules_file = StringIO(EXAMPE_RULES)
 with o2:
+    # The checkbox is enabled after rules are edited
     show_ed = 'edited' not in st.session_state
     use_edited = st.checkbox('Use edited rules', value=False, disabled=show_ed)
     if use_edited:
         edited_file = st.session_state['edited']
-        uploaded_file = StringIO(edited_file)
+        rules_file = StringIO(edited_file)
 
-if uploaded_file is not None:
+# If a set of rules is available as a csv file
+if rules_file is not None:
     # Create a DataFrame from a csv file
-    reader = pd.read_csv(uploaded_file)
+    reader = pd.read_csv(rules_file)
 
     with st.expander("See Rules"):
         st.dataframe(reader, use_container_width=True)
 
+    # If the rules were edited, enable download
     if use_edited:
         csv = convert_df(reader)
         st.download_button(label="Download rules",
@@ -161,14 +166,13 @@ if uploaded_file is not None:
     rules = reader.values.tolist()
     policies = [Policy(*r) for r in rules]
     analyzer = PolicyAnalyzer(policies)
-    # st.write(policies)
 
-    # Find relations
+    # Find relations among firewall rules
     anom = analyzer.get_anomalies()
     anom_dict = to_dict(anom)
 
-    # Display relations
-    relations = {}  # cols
+    # Reformat the relations as a pandas dataframe
+    relations = {}
     for y_rule, y_dict in anom_dict.items():
         col = [None] * len(rules)
         for x_rule in y_dict:
@@ -220,18 +224,20 @@ if uploaded_file is not None:
             y_rule = st.selectbox("Select Y Rule:", list(anom_dict.keys()))
 
         with col2:
-            # Get the long description of relation between rules X and Y.
+            # Get a list of related rules.
             x_list = list(anom_dict[y_rule].keys())
 
             # Select one of the X rules
             x_rule = st.selectbox("Select X Rule", x_list)
 
         if y_rule:  # note that 0 === False
+            # Display the pair of selected rules 
             st.dataframe(reader.iloc[[x_rule, y_rule]].
                          rename(index={x_rule: f'X ({x_rule})',
                                 y_rule: f'Y ({y_rule})'}),
                          use_container_width=True)
 
+            # Display the discription of relations and recommendations
             acode = anom_dict[y_rule][x_rule]
             xy_rel = desc[acode]['long']
             xy_short = desc[acode]['short']
@@ -249,16 +255,20 @@ if uploaded_file is not None:
 # %% Editing Section
 
         if acode in errors:
+            # Offer to apply recommendation to correct errors
             placeholder = st.empty()
             apply = placeholder.button(
                 "Apply Recommendation", disabled=False, key=1)
 
             if apply:
+                # Remove the button
                 placeholder.empty()
-                newdf = reader.copy()
+                
+                # Get pandas dataframe as a list
                 rules_list = reader.values.tolist()
 
                 if acode == "SHD" and apply:
+                    # Move rule Y before rule X
                     rules_list.insert(x_rule, rules_list[y_rule])
                     del rules_list[y_rule+1]
 
@@ -268,9 +278,14 @@ if uploaded_file is not None:
                 if acode == "RYD" and apply:
                     del rules_list[y_rule]
 
+                # Generate a CSV from the modified rules
                 newdf = pd.DataFrame(rules_list, columns=reader.columns)
                 csv = convert_df(newdf)
+                
+                # Save the CSV in the session state
                 st.session_state['edited'] = csv.decode("utf-8")
+                
+                # Run the app from the top (this may not be neccessary)
                 st.experimental_rerun()
 
     else:
