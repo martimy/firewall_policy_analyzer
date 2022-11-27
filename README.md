@@ -2,7 +2,7 @@
 
 A application module that detects anomalies and conflicts in firewall policies.
 
-An app written using [streamlit](https://martimy-firewall-policy-analyzer-st-analyzer-ust3ul.streamlit.app/) demonstrates the use of the analyzer.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://martimy-firewall-policy-analyzer-st-analyzer-ust3ul.streamlit.app/)
 
 ![Streamlit screeshot](img/screen_1.png)
 
