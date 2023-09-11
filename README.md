@@ -42,10 +42,10 @@ TCP,192.168.1.3,ANY,172.16.16.1,80,ACCEPT
 
 where:
 
-- protocol: is a TCP/IP protocol
-- src/dest: is the source/destination IPv4 addresses
-- s_port/d_port: is the source/destination port numbers
-- action: either ACCEPT or DENY
+- protocol: is one of the following: 'IP', 'ICMP', 'TCP', or 'UDP'.
+- src/dest: is the source/destination IPv4 addresses. Acceptable formats are: 'x.x.x.x' for hosts, 'x.x.x.x/x' for networks, '0.0.0.0/0', or 'ANY'.
+- s_port/d_port: is the source/destination port numbers or 'ANY'.
+- action: either 'ACCEPT' or 'DENY'.
 
 1. Upload the rules .csv file.
 
@@ -63,9 +63,9 @@ where:
 
 4. Under the Recommendation heading, the analyzer shows the recommended action to take. If you choose to apply the recommendation, the analyzer will modify the original rule set accordingly (this action cannot be undone).
 
-   Note that for the change to take affect, you must check the box "Use edited rules" under the rules file name (near the top of the screen).
+   Note that for the change to take affect, you must check the box "Use edited rules" under the rules filename (near the top of the screen).
 
-5. Repeat steps 3 and 4 for other anomalies until all anomalies are corrected. Note that the analyzer does not provide to apply recommendations for correlation anomalies so the user must modify the original file manually if required.
+5. Repeat steps 3 and 4 for other anomalies until all anomalies are reviewed. Note that the analyzer does not provide the option to apply recommendations for correlation anomalies so the user must modify the original file manually, if needed.
 
 6. Once you are satisfied with all the changes, you can save the modified rule set by clicking the "Download rules" button under the Rules widget. The new rules will be saved as "new_rules.csv" in the default Downloads folder.
 
