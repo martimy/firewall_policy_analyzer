@@ -8,7 +8,30 @@ A application module that detects anomalies and conflicts in firewall policies.
 
 ## Installation:
 
-To be completed.
+To use the app, follow these steps (assuming Ubuntu Linux, but Windows also works):
+
+1. Clone this repository:
+
+```bash
+$ git clone https://github.com/martimy/firewall_policy_analyzer
+$ cd firewall_policy_analyzer
+```
+
+2. Install Streamlit and other requirements
+
+```bash
+$ pip3 install -r requirements.txt
+```
+
+3. Start the Streamlit app
+
+```bash
+$ streamlit run st_analyzer.py
+```
+
+## Getting Started
+
+<to be completed>
 
 ## Acknowledgements:
 
