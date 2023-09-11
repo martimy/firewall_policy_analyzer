@@ -1,10 +1,9 @@
 # Firewall Policy Analyzer
 
-A application module that detects anomalies and conflicts in firewall policies.
+The app is written in Streamlit: [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://martimy-firewall-policy-analyzer-st-analyzer-ust3ul.streamlit.app/)
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://martimy-firewall-policy-analyzer-st-analyzer-ust3ul.streamlit.app/)
+This is an application that detects anomalies and conflicts in firewall policies. The app aims to improve the security and performance of network firewalls by identifying and resolving policy inconsistencies. The app uses a formal model to represent firewall rules and a conflict detection algorithm to find policy conflicts. The app also provides a graphical user interface to visualize and manage firewall policies.
 
-![Streamlit screeshot](img/screen_1.png)
 
 ## Installation:
 
