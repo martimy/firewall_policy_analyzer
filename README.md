@@ -30,6 +30,8 @@ $ streamlit run st_analyzer.py
 
 ## Getting Started
 
+[Watch the Getting Started video on YouTube](https://youtu.be/zJFOc2t0GhI).
+
 This app analyzes firewall rules saved  as a .csv file in the following format:
 
 ```csv
