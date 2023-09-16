@@ -75,7 +75,7 @@ class Protocol():
     @classmethod
     def get_protocol(cls, protocol):
         if protocol.upper() not in Protocol._protocols:
-            raise ValueError("not a recognized protocol")
+            raise ValueError(f"Not a recognized protocol '{protocol}'")
         return cls(protocol)
 
 
@@ -133,6 +133,7 @@ class Packet():
             'dst': Address.get_address(dst.strip()),
             'dport': Port.get_port(d_port),
         }
+
 
     def __repr__(self):
         return ','.join(map(str, self.fields.values()))
