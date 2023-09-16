@@ -335,35 +335,37 @@ try:
         else:
             st.markdown(NO_RELATION)
 
-        # Testing packets against the rules
-        st.header("Test Packets")
+        if packets_file:
+            # Testing packets against the rules
+            st.header("Test Packets")
+            preader = pd.read_csv(packets_file, dtype=str)
+            # preader = pd.DataFrame(columns=packet_fields)
 
-        preader = (
-            pd.read_csv(packets_file, dtype=str)
-            if packets_file
-            else pd.DataFrame(columns=packet_fields)
-        )
-
-        if "data" not in st.session_state:
-            st.session_state.data = get_matches(preader, analyzer)
-
-        editor_value = st.data_editor(
-            st.session_state["data"],
-            use_container_width=True,
-            disabled=("match", "action"),
-            hide_index=True,
-            num_rows="dynamic",
-        )
-
-        if not editor_value.equals(st.session_state["data"]):
-            editor_value = get_matches(
-                editor_value[packet_fields],
-                analyzer,
+            preader = get_matches(preader, analyzer)
+            
+            if "packets" not in st.session_state:
+                st.session_state.packets = preader
+    
+            editor_value = st.data_editor(
+                st.session_state["packets"],
+                use_container_width=True,
+                disabled=("match", "action"),
+                hide_index=True,
+                num_rows="dynamic",
             )
-            st.session_state["data"] = editor_value
-            st.experimental_rerun()
+    
+            if not editor_value.equals(st.session_state["packets"]):
+                editor_value = get_matches(
+                    editor_value[packet_fields],
+                    analyzer,
+                )
+                st.session_state["packets"] = editor_value
+                st.experimental_rerun()
+        else:
+            st.session_state.pop("packets", None)
 
     else:
+        st.session_state.pop("packets", None)
         st.warning(UPLOAD_FILE)
 except Exception as e:
     st.error(e)
