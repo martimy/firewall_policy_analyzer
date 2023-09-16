@@ -178,7 +178,10 @@ try:
             )
 
         # Convert DataFrame to list to perfrom analysis
-        rules = reader.values.tolist()
+        selected_columns = reader[
+            ["protocol", "src", "s_port", "dst", "d_port", "action"]
+        ]
+        rules = selected_columns.values.tolist()
         policies = [Policy(*r) for r in rules]
         analyzer = PolicyAnalyzer(policies)
         # Find relations among firewall rules

@@ -87,9 +87,9 @@ class Protocol:
 
     @classmethod
     def get_protocol(cls, protocol):
-        if protocol.upper() not in Protocol._protocols + ["IP", "ANY"]:
-            raise ValueError(f"Not a recognized protocol '{protocol}'")
         protocol = "IP" if protocol.upper() == "ANY" else protocol
+        if protocol.upper() not in Protocol._protocols + ["IP"]:
+            raise ValueError(f"Not a recognized protocol '{protocol}'")
         return cls(protocol)
 
 
