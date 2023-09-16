@@ -54,7 +54,20 @@ class Protocol:
     A Protcol
     """
 
-    _protocols = ["IP", "ICMP", "TCP", "UDP"]
+    _protocols = [
+        "ICMP",
+        "IGMP",
+        "TCP",
+        "UDP",
+        "ESP",
+        "AH",
+        "EIGRP",
+        "OSPF",
+        "GRE",
+        "IP-in-IP",
+        "ICMPv6",
+        "SCTP",
+    ]
 
     def __init__(self, protocol):
         # Do not use this construtor directly, use get_protocol() instead
@@ -67,15 +80,16 @@ class Protocol:
         return self.protocol
 
     def superset_of(self, other):
-        return self.protocol == "IP" and other.protocol in Protocol._protocols[1:]
+        return self.protocol == "IP" and other.protocol in Protocol._protocols
 
     def subset_of(self, other):
-        return self.protocol in Protocol._protocols[1:] and other.protocol == "IP"
+        return self.protocol in Protocol._protocols and other.protocol == "IP"
 
     @classmethod
     def get_protocol(cls, protocol):
-        if protocol.upper() not in Protocol._protocols:
+        if protocol.upper() not in Protocol._protocols + ["IP", "ANY"]:
             raise ValueError(f"Not a recognized protocol '{protocol}'")
+        protocol = "IP" if protocol.upper() == "ANY" else protocol
         return cls(protocol)
 
 
