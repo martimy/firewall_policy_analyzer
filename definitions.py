@@ -23,6 +23,7 @@ class RRule(Enum):
     """
     Define rule relations
     """
+
     IMB = 5  # "IMB"  # Inclusive match (subset)
     IMP = 4  # "IMP"  # Inclusive match (superset)
     CC = 3  # "CC"  # corrolation
@@ -41,6 +42,7 @@ class RField(Enum):
     """
     Define field relations
     """
+
     UNEQUAL = 0
     EQUAL = 1
     SUBSET = 2
@@ -57,6 +59,7 @@ class Anomaly(Enum):
     """
     Define anomaly types
     """
+
     AOK = 0  # no anomaly
     SHD = 1  # shadowing
     COR = 2  # corrolation

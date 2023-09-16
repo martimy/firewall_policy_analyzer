@@ -21,7 +21,7 @@ import ipaddress
 from definitions import RRule, RField, Anomaly
 
 
-class Port():
+class Port:
     """
     A TCP/UDP Port
     """
@@ -49,7 +49,7 @@ class Port():
         return cls(int(port))
 
 
-class Protocol():
+class Protocol:
     """
     A Protcol
     """
@@ -79,15 +79,15 @@ class Protocol():
         return cls(protocol)
 
 
-class Address():
+class Address:
     """
     An IPv4 Address
     """
 
     @classmethod
     def get_address(cls, address):
-        if address == 'any':
-            address = '0.0.0.0/0'
+        if address == "any":
+            address = "0.0.0.0/0"
         return ipaddress.ip_interface(address).network
 
 
@@ -120,23 +120,22 @@ def compare_addresses(a, b):
     return relation
 
 
-class Packet():
+class Packet:
     """
     Packet header information
     """
 
     def __init__(self, protocol, src, s_port, dst, d_port):
         self.fields = {
-            'protocol': Protocol.get_protocol(protocol.strip()),
-            'src': Address.get_address(src.strip()),
-            'sport': Port.get_port(s_port.strip()),
-            'dst': Address.get_address(dst.strip()),
-            'dport': Port.get_port(d_port),
+            "protocol": Protocol.get_protocol(protocol.strip()),
+            "src": Address.get_address(src.strip()),
+            "sport": Port.get_port(s_port.strip()),
+            "dst": Address.get_address(dst.strip()),
+            "dport": Port.get_port(d_port),
         }
 
-
     def __repr__(self):
-        return ','.join(map(str, self.fields.values()))
+        return ",".join(map(str, self.fields.values()))
 
 
 class Policy(Packet):
@@ -151,11 +150,11 @@ class Policy(Packet):
     def compare_fields(self, other):
         # compare fields with another policy or packet
         return [
-            compare_fields(self.fields['protocol'], other.fields['protocol']),
-            compare_addresses(self.fields['src'], other.fields['src']),
-            compare_fields(self.fields['sport'], other.fields['sport']),
-            compare_addresses(self.fields['dst'], other.fields['dst']),
-            compare_fields(self.fields['dport'], other.fields['dport'])
+            compare_fields(self.fields["protocol"], other.fields["protocol"]),
+            compare_addresses(self.fields["src"], other.fields["src"]),
+            compare_fields(self.fields["sport"], other.fields["sport"]),
+            compare_addresses(self.fields["dst"], other.fields["dst"]),
+            compare_fields(self.fields["dport"], other.fields["dport"]),
         ]
 
     def compare_actions(self, other):
@@ -178,8 +177,9 @@ class Policy(Packet):
             relation = RRule.IMP
         elif all(f in [RField.SUBSET, RField.EQUAL] for f in fields):
             relation = RRule.IMB
-        elif any(f is RField.UNEQUAL for f in fields) \
-                and any(f is not RField.UNEQUAL for f in fields):
+        elif any(f is RField.UNEQUAL for f in fields) and any(
+            f is not RField.UNEQUAL for f in fields
+        ):
             relation = RRule.PD
         else:
             relation = RRule.CC
@@ -188,14 +188,15 @@ class Policy(Packet):
     def is_match(self, packet):
         # the packet matches this policy if all fields in policy are
         # equal or supersets of the packet fields
-        return all(f in [RField.SUPERSET, RField.EQUAL]
-                   for f in self.compare_fields(packet))
+        return all(
+            f in [RField.SUPERSET, RField.EQUAL] for f in self.compare_fields(packet)
+        )
 
     def __repr__(self):
-        return ','.join(map(str, self.fields.values())) + ',' + self.action
+        return ",".join(map(str, self.fields.values())) + "," + self.action
 
 
-class PolicyAnalyzer():
+class PolicyAnalyzer:
     """
     Firewall Policy Analyzer
     """
@@ -206,7 +207,7 @@ class PolicyAnalyzer():
         (RRule.CC, False): Anomaly.COR,
         (RRule.IMP, True): Anomaly.RYD,
         (RRule.EM, True): Anomaly.RYD,
-        (RRule.IMB, True): Anomaly.RXD
+        (RRule.IMB, True): Anomaly.RXD,
     }
 
     def __init__(self, policies):
@@ -219,16 +220,19 @@ class PolicyAnalyzer():
         # compare each policy with the previous ones
         rule_relations = {}
         for y, y_policy in enumerate(self.policies):
-            rule_relations[y] = [(x, x_policy.get_rule_relation(y_policy))
-                                 for x, x_policy in enumerate(self.policies[0:y])]
+            rule_relations[y] = [
+                (x, x_policy.get_rule_relation(y_policy))
+                for x, x_policy in enumerate(self.policies[0:y])
+            ]
         return rule_relations
 
     def get_a_relations(self):
         # compare each policy action with the previous ones
         rule_a_relations = {}
         for y, y_policy in enumerate(self.policies):
-            rule_a_relations[y] = [x_policy.compare_actions(y_policy)
-                                   for x_policy in self.policies[0:y]]
+            rule_a_relations[y] = [
+                x_policy.compare_actions(y_policy) for x_policy in self.policies[0:y]
+            ]
         return rule_a_relations
 
     def get_anomalies(self):
@@ -241,10 +245,13 @@ class PolicyAnalyzer():
                 anamoly = self._get_anamoly(relation, a_relations[ry][rx])
                 if anamoly is Anomaly.RXD:
                     # check the rules in between for additional conditions
-                    for rz in range(rx+1, ry):
-                        if any(a == rx and not a_relations[rz][rx]
-                               and b in [RRule.CC, RRule.IMB]
-                                   for a, b in rule_relations[rz]):
+                    for rz in range(rx + 1, ry):
+                        if any(
+                            a == rx
+                            and not a_relations[rz][rx]
+                            and b in [RRule.CC, RRule.IMB]
+                            for a, b in rule_relations[rz]
+                        ):
                             anamoly = Anomaly.AOK
                             break
                 if anamoly is not Anomaly.AOK:
