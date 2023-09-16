@@ -206,6 +206,9 @@ class Policy(Packet):
             f in [RField.SUPERSET, RField.EQUAL] for f in self.compare_fields(packet)
         )
 
+    def get_action(self):
+        return self.action
+
     def __repr__(self):
         return ",".join(map(str, self.fields.values())) + "," + self.action
 

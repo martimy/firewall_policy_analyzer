@@ -21,7 +21,7 @@ limitations under the License.
 from io import StringIO
 import pandas as pd
 import streamlit as st
-from policyanalyzer import Policy, PolicyAnalyzer
+from policyanalyzer import Policy, PolicyAnalyzer, Packet
 
 EXAMPE_RULES = """protocol,src,s_port,dst,d_port,action
 tcp,140.192.37.20,any,0.0.0.0/0,80,deny
@@ -100,6 +100,7 @@ EXAMPLE_HELP = "Use built-in example file to demo the app."
 SELECT_RULES = "Select rules to review relationships."
 UPLOAD_FILE = "Upload a file"
 
+packet_fields = ["protocol", "src", "s_port", "dst", "d_port"]
 errors = ["SHD", "RYD", "RXD"]
 warn = ["COR"]
 
@@ -132,15 +133,37 @@ def convert_df(data_frame):
     return data_frame.to_csv(index=False).encode("utf-8")
 
 
+def get_matches(preader, analyzer):
+    rule_nums = []
+    rule_actions = []
+    for packet in [Packet(*p) for p in preader.values.tolist()]:
+        result = analyzer.get_first_match(packet)
+        if result:
+            rule_nums.append(str(result[0]))
+            rule_actions.append(result[1].get_action())
+        else:
+            rule_nums.append("None")
+            rule_actions.append("None")
+
+    preader.insert(len(preader.columns), "match", rule_nums)
+    preader.insert(len(preader.columns), "action", rule_actions)
+
+    return preader
+
+
 ## Start the app
+st.set_page_config(layout="wide")
 st.title(TITLE)
-with st.expander("About", expanded=True):
+with st.expander("About", expanded=False):
     st.markdown(ABOUT)
 
 try:
     # The firewall rules sources can be a file, a hardcoded example, or modified
     # rules after applying recommendations.
-    rules_file = st.file_uploader("Upload rules file", type="csv")
+    rules_file = st.sidebar.file_uploader("Upload rules file", type="csv")
+
+    # upload test packets
+    packets_file = st.sidebar.file_uploader("Upload test packets", type="csv")
 
     o1, o2 = st.columns(2)
     with o1:
@@ -164,7 +187,7 @@ try:
         # Create a DataFrame from a csv file
         reader = pd.read_csv(rules_file)
 
-        with st.expander("See Rules"):
+        with st.expander("Rules"):
             st.dataframe(reader, use_container_width=True)
 
         # If the rules were edited, enable download
@@ -178,9 +201,7 @@ try:
             )
 
         # Convert DataFrame to list to perfrom analysis
-        selected_columns = reader[
-            ["protocol", "src", "s_port", "dst", "d_port", "action"]
-        ]
+        selected_columns = reader[packet_fields + ["action"]]
         rules = selected_columns.values.tolist()
         policies = [Policy(*r) for r in rules]
         analyzer = PolicyAnalyzer(policies)
@@ -313,6 +334,35 @@ try:
 
         else:
             st.markdown(NO_RELATION)
+
+        # Testing packets against the rules
+        st.header("Test Packets")
+
+        preader = (
+            pd.read_csv(packets_file, dtype=str)
+            if packets_file
+            else pd.DataFrame(columns=packet_fields)
+        )
+
+        if "data" not in st.session_state:
+            st.session_state.data = get_matches(preader, analyzer)
+
+        editor_value = st.data_editor(
+            st.session_state["data"],
+            use_container_width=True,
+            disabled=("match", "action"),
+            hide_index=True,
+            num_rows="dynamic",
+        )
+
+        if not editor_value.equals(st.session_state["data"]):
+            editor_value = get_matches(
+                editor_value[packet_fields],
+                analyzer,
+            )
+            st.session_state["data"] = editor_value
+            st.experimental_rerun()
+
     else:
         st.warning(UPLOAD_FILE)
 except Exception as e:
