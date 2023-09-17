@@ -245,11 +245,11 @@ try:
 
             st.write("Relationship table:")
 
-            use_colors = st.checkbox("Highlight Errors", value=False)
-            if use_colors:
-                st.dataframe(pdr.style.applymap(color_erros), use_container_width=True)
-            else:
-                st.dataframe(pdr, use_container_width=True)
+            hide_gen = st.checkbox("Hide Generalizations", value=False)
+            if hide_gen:
+                pdr = pdr.applymap(lambda x: x.replace("GEN", ""))
+            st.dataframe(pdr.style.applymap(color_erros), use_container_width=True)
+
         else:
             st.markdown(NO_RELATION)
 
@@ -342,10 +342,10 @@ try:
             # preader = pd.DataFrame(columns=packet_fields)
 
             preader = get_matches(preader, analyzer)
-            
+
             if "packets" not in st.session_state:
                 st.session_state.packets = preader
-    
+
             editor_value = st.data_editor(
                 st.session_state["packets"],
                 use_container_width=True,
@@ -353,7 +353,7 @@ try:
                 hide_index=True,
                 num_rows="dynamic",
             )
-    
+
             if not editor_value.equals(st.session_state["packets"]):
                 editor_value = get_matches(
                     editor_value[packet_fields],
