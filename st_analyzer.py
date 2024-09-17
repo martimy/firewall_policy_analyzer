@@ -247,8 +247,8 @@ try:
 
             hide_gen = st.checkbox("Hide Generalizations", value=False)
             if hide_gen:
-                pdr = pdr.applymap(lambda x: x.replace("GEN", ""))
-            st.dataframe(pdr.style.applymap(color_erros), use_container_width=True)
+                pdr = pdr.map(lambda x: x.replace("GEN", ""))
+            st.dataframe(pdr.style.map(color_erros), use_container_width=True)
 
         else:
             st.markdown(NO_RELATION)
@@ -330,7 +330,7 @@ try:
                     st.session_state["edited"] = csv.decode("utf-8")
 
                     # Run the app from the top (this may not be neccessary)
-                    st.experimental_rerun()
+                    st.rerun()
 
         else:
             st.markdown(NO_RELATION)
@@ -360,7 +360,7 @@ try:
                     analyzer,
                 )
                 st.session_state["packets"] = editor_value
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.session_state.pop("packets", None)
 
