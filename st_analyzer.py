@@ -37,7 +37,6 @@ udp,0.0.0.0/0,any,161.120.33.40,53,accept
 udp,140.192.38.0/24,any,161.120.35.0/24,any,accept
 udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
 
-
 DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they
 have different actions, and if rule (Y) can match all the packets that
 match rule (X)."""
@@ -75,7 +74,7 @@ desc = {
     "COR": {
         "short": "Corrolation",
         "long": "corrolates with",
-        "rec": "Verify correctness by sudying the effect of flipping the order of the rules.",
+        "rec": "Verify correctness by sudying the effect of flipping the order of the two rules.",
         "def": DEF_COR,
     },
     "RXD": {
@@ -245,7 +244,7 @@ try:
 
             st.write("Relationship table:")
 
-            hide_gen = st.checkbox("Hide Generalizations", value=False)
+            hide_gen = st.checkbox("Ignore Generalizations", value=False)
             if hide_gen:
                 pdr = pdr.map(lambda x: x.replace("GEN", ""))
             st.dataframe(pdr.style.map(color_erros), use_container_width=True)
@@ -297,7 +296,7 @@ try:
 
             ## Editing Section
 
-            if acode in errors:
+            if acode in errors or acode in warn:
                 # Offer to apply recommendation to correct errors
                 placeholder = st.empty()
                 apply = placeholder.button(
@@ -321,6 +320,13 @@ try:
 
                     if acode == "RYD" and apply:
                         del rules_list[y_rule]
+
+                    if acode == "COR" and apply:
+                        # Switch rule X and rule Y places
+                        rules_list[x_rule], rules_list[y_rule] = (
+                            rules_list[y_rule],
+                            rules_list[x_rule],
+                        )
 
                     # Generate a CSV from the modified rules
                     newdf = pd.DataFrame(rules_list, columns=reader.columns)
