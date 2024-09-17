@@ -150,6 +150,24 @@ def get_matches(preader, analyzer):
     return preader
 
 
+# Function to move a row based on 'before' or 'after' selection
+def move_row(df, from_idx, to_idx, position):
+    df = df.copy()
+    row = df.iloc[from_idx]
+    df = df.drop(index=from_idx).reset_index(drop=True)
+
+    if position == "before":
+        df_top = df.iloc[:to_idx]
+        df_bottom = df.iloc[to_idx:]
+        df = pd.concat([df_top, pd.DataFrame([row]), df_bottom]).reset_index(drop=True)
+    else:  # "after"
+        df_top = df.iloc[: to_idx + 1]
+        df_bottom = df.iloc[to_idx + 1 :]
+        df = pd.concat([df_top, pd.DataFrame([row]), df_bottom]).reset_index(drop=True)
+
+    return df
+
+
 ## Start the app
 st.set_page_config(layout="wide")
 st.title(TITLE)
@@ -188,6 +206,26 @@ try:
 
         with st.expander("Rules"):
             st.dataframe(reader, use_container_width=True)
+
+            # Move rows, if required
+            f1, f2, f3 = st.columns(3)
+            from_idx = f1.selectbox(
+                "Select row index to move", options=range(len(reader))
+            )
+            position = f2.selectbox("Move row", options=["before", "after"])
+            to_idx = f3.selectbox(
+                "Select destination row index", options=range(len(reader))
+            )
+
+            # Button to apply the move operation
+            if st.button("Move Row"):
+                reader = move_row(reader, from_idx, to_idx, position)
+
+                # Generate a CSV from the modified rules
+                csv = convert_df(reader)
+
+                # Save the CSV in the session state
+                st.session_state["edited"] = csv.decode("utf-8")
 
         # If the rules were edited, enable download
         if use_edited:
@@ -306,6 +344,10 @@ try:
                 if apply:
                     # Remove the button
                     placeholder.empty()
+                    if not use_edited:
+                        placeholder.markdown(
+                            "Check 'Use Edited Rules' box above, to update the rules."
+                        )
 
                     # Get pandas dataframe as a list
                     rules_list = reader.values.tolist()
@@ -335,7 +377,7 @@ try:
                     # Save the CSV in the session state
                     st.session_state["edited"] = csv.decode("utf-8")
 
-                    # Run the app from the top (this may not be neccessary)
+                    # Run the app from the top
                     st.rerun()
 
         else:
