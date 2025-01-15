@@ -29,15 +29,29 @@ from policyanalyzer import Policy, PolicyAnalyzer, Packet
 def policies_st(policies):
     print("=" * 50)
     print("Policies:")
+
     for n, p in enumerate(policies):
         print(f"{n:3}: {p}")
 
 
 def anomalies_st(anomalies):
     print("=" * 50)
-    print("Anomalies:")
+    print("Patterns:")
     for i in anomalies:
         print(f"{i:3}: {anom[i]}")
+
+
+def read_csv_to_dict(file_path):
+    """
+    Reads a CSV file and returns a list of dictionaries where keys are the CSV
+    header items.
+
+    :param file_path: Path to the CSV file
+    :return: List of dictionaries
+    """
+    with open(file_path, mode="r") as file:
+        csv_reader = csv.DictReader(file)
+        return [row for row in csv_reader]
 
 
 # Read csv file conatining policies but remove header
@@ -45,15 +59,16 @@ def anomalies_st(anomalies):
 # Read command line arguments
 if len(sys.argv) > 2:
     outfilename = sys.argv[2].split(".")[0] + ".csv"
+
 if len(sys.argv) > 1:
-    with open(sys.argv[1], "r") as csvfile:
-        reader = list(csv.reader(csvfile))[1:]
+    csvfile = sys.argv[1]
+    reader = read_csv_to_dict(csvfile)
 else:
     print(f"Usage: python3 {os.path.basename(__file__)} <file>")
     sys.exit("Input file name is required!")
 
 
-policies = [Policy(*r) for r in reader]
+policies = [Policy(**r) for r in reader]
 analyzer = PolicyAnalyzer(policies)
 rule_relations = analyzer.get_relations()
 anom = analyzer.get_anomalies()
@@ -64,16 +79,23 @@ anomalies_st(anom)
 
 print("=" * 50)
 print("Matches:")
-packet = Packet("tcp", "140.192.37.0/24", "any", "0.0.0.0/0", "80")
-packet = Packet("tcp", "0.0.0.0/0", "any", "161.120.33.40", "80")
-packet = Packet("tcp", "140.192.37.0/24", "any", "161.120.33.40", "80")
-result = analyzer.get_first_match(packet)
-print(result)
+
+for packet in [
+    Packet("tcp", "192.168.1.4", "ANY", "172.16.16.1", "80"),
+    Packet("tcp", "0.0.0.0/0", "any", "161.120.33.40", "80"),
+    Packet("tcp", "140.192.37.0/24", "any", "161.120.33.40", "80"),
+]:
+
+    result = analyzer.get_first_match(packet)
+    if result:
+        print(packet)
+        print("has a match:")
+        print(result)        
 
 
 ####
+print("\nRelations")
 num = len(reader)
-print(num)
 relations = {}  # cols
 for y_rule in anom:
     # create a col of None

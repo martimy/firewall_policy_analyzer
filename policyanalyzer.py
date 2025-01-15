@@ -19,6 +19,73 @@ limitations under the License.
 
 import ipaddress
 from definitions import RRule, RField, Anomaly
+from parsing import parse_ports_string, protocols_to_numbers
+
+
+class PortSet:
+    """
+    A TCP/UDP Port
+    """
+
+    _ports = {
+        "HTTP": 80,
+        "HTTPS": 443,
+        "FTP": 20,  # and 21
+        "SSH": 22,
+        "Telnet": 23,
+        "SMTP": 25,
+        "DNS": 53,
+        "DHCP": 67,  # and 68
+        "TFTP": 69,
+        "POP3": 110,
+        "IMAP": 143,
+        "SNMP": 161,
+        "LDAP": 389,
+        "SMB": 445,
+        "NTP": 123,
+        "RDP": 3389,
+        "MySQL": 3306,
+    }
+
+    def __init__(self, ports):
+        # Do not use this constructor directly, use get_port() instead
+        self.port_set = ports
+
+    def __eq__(self, other):
+        return self.port_set == other.port_set
+
+    def __repr__(self):
+        if self.port_set is None:
+            return "ANY"
+        elif len(self.port_set) == 1:
+            return str(next(iter(self.port_set)))
+        return str(self.port_set)
+
+    def superset_of(self, other):
+        return (
+            self.port_set is None and other.port_set is not None
+        ) or self.port_set.issuperset(other.port_set)
+
+    def subset_of(self, other):
+        return (
+            self.port_set is not None and other.port_set is None
+        ) or self.port_set.issubset(other.port_set)
+
+    @classmethod
+    def get_port(cls, ports_string):
+        if isinstance(ports_string, str) and ports_string.strip().upper() == "ANY":
+            return cls(None)
+        else:
+            a_set = parse_ports_string(ports_string)
+            ports = protocols_to_numbers(a_set, PortSet._ports)
+        return cls(set(ports))
+
+
+# # Check relationships
+# is_superset = range_set.issuperset(list_set)
+# is_subset = list_set.issubset(range_set)
+# is_disjoint = range_set.isdisjoint(list_set)
+# has_partial_overlap = not is_disjoint and not is_superset
 
 
 class Port:
@@ -27,7 +94,7 @@ class Port:
     """
 
     def __init__(self, port):
-        # Do not use this construtor directly, use get_port() instead
+        # Do not use this constructor directly, use get_port() instead
         self.port = port
 
     def __eq__(self, other):
@@ -70,7 +137,7 @@ class Protocol:
     ]
 
     def __init__(self, protocol):
-        # Do not use this construtor directly, use get_protocol() instead
+        # Do not use this constructor directly, use get_protocol() instead
         self.protocol = protocol.upper()
 
     def __eq__(self, other):
@@ -100,9 +167,35 @@ class Address:
 
     @classmethod
     def get_address(cls, address):
-        if address == "any":
+        if address.upper() == "ANY":
             address = "0.0.0.0/0"
         return ipaddress.ip_interface(address).network
+
+
+class Interface:
+    """
+    An Interface
+    """
+
+    def __init__(self, interface):
+        # Do not use this constructor directly, use get_port() instead
+        self.interface = interface
+
+    def __eq__(self, other):
+        return self.interface == other.interface
+
+    def __repr__(self):
+        return self.interface
+
+    def superset_of(self, other):
+        return self.interface == "ANY" and other.port != "ANY"
+
+    def subset_of(self, other):
+        return self.port != "ANY" and other.port == "ANY"
+
+    @classmethod
+    def get_interface(cls, interface):
+        return cls(interface.upper())
 
 
 def compare_fields(a, b):
@@ -139,13 +232,14 @@ class Packet:
     Packet header information
     """
 
-    def __init__(self, protocol, src, s_port, dst, d_port):
+    def __init__(self, protocol, src, s_port, dst, d_port, *, interface="ANY"):
         self.fields = {
+            "interface": Interface.get_interface(interface.strip()),
             "protocol": Protocol.get_protocol(protocol.strip()),
             "src": Address.get_address(src.strip()),
-            "sport": Port.get_port(s_port.strip()),
+            "sport": PortSet.get_port(s_port.strip()),
             "dst": Address.get_address(dst.strip()),
-            "dport": Port.get_port(d_port),
+            "dport": PortSet.get_port(d_port.strip()),
         }
 
     def __repr__(self):
@@ -157,13 +251,21 @@ class Policy(Packet):
     Firewall Policy
     """
 
-    def __init__(self, protocol, src, s_port, dst, d_port, action):
-        super().__init__(protocol, src, s_port, dst, d_port)
-        self.action = action
+    def __init__(self, **policy_fields):
+        interface = policy_fields.get("interface", "ANY")
+        protocol = policy_fields.get("protocol", "ANY")
+        src = policy_fields.get("src", "ANY")
+        s_port = policy_fields.get("s_port", "ANY")
+        dst = policy_fields.get("dst", "ANY")
+        d_port = policy_fields.get("d_port", "ANY")
+
+        super().__init__(protocol, src, s_port, dst, d_port, interface=interface)
+        self.action = policy_fields.get("action", "DENY")
 
     def compare_fields(self, other):
         # compare fields with another policy or packet
         return [
+            compare_fields(self.fields["interface"], other.fields["interface"]),
             compare_fields(self.fields["protocol"], other.fields["protocol"]),
             compare_addresses(self.fields["src"], other.fields["src"]),
             compare_fields(self.fields["sport"], other.fields["sport"]),
