@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright 2021-2022 Maen Artimy
+Copyright 2021-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -188,10 +188,10 @@ class Interface:
         return self.interface
 
     def superset_of(self, other):
-        return self.interface == "ANY" and other.port != "ANY"
+        return self.interface == "ANY" and other.interface != "ANY"
 
     def subset_of(self, other):
-        return self.port != "ANY" and other.port == "ANY"
+        return self.interface != "ANY" and other.interface == "ANY"
 
     @classmethod
     def get_interface(cls, interface):
