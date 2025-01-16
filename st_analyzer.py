@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright 2022 Maen Artimy
+Copyright 2022-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ desc = {
 }
 
 TITLE = "Firewall Policy Analyzer"
-ABOUT = """This app analyzes a set of firewall policies and detects any anomalies.\n
+ABOUT = """This app analyzes a set of firewall policies and detects common 
+patterns and conflicts.\n
 :warning: This is work in progress. Use at your own risk. :warning:"""
 NO_RELATION = ":heavy_check_mark: No anomalies detected."
 EXAMPLE_HELP = "Use built-in example file to demo the app."
@@ -168,7 +169,20 @@ def move_row(df, from_idx, to_idx, position):
     return df
 
 
-## Start the app
+def read_csv_to_dict(file_path):
+    """
+    Reads a CSV file and returns a list of dictionaries where keys are the CSV
+    header items.
+
+    :param file_path: Path to the CSV file
+    :return: List of dictionaries
+    """
+    with open(file_path, mode="r") as file:
+        csv_reader = csv.DictReader(file)
+        return [row for row in csv_reader]
+
+
+# Start the app
 st.set_page_config(layout="wide")
 st.title(TITLE)
 with st.expander("About", expanded=False):
@@ -202,6 +216,7 @@ try:
     # If a set of rules is available as a csv file
     if rules_file is not None:
         # Create a DataFrame from a csv file
+
         reader = pd.read_csv(rules_file)
 
         with st.expander("Rules"):
@@ -237,10 +252,12 @@ try:
                 mime="text/csv",
             )
 
-        # Convert DataFrame to list to perfrom analysis
-        selected_columns = reader[packet_fields + ["action"]]
-        rules = selected_columns.values.tolist()
-        policies = [Policy(*r) for r in rules]
+        # Convert the DataFrame to a list of dictionaries with all values as strings
+        rules = [
+            {key: str(value) for key, value in row.items()}
+            for row in reader.to_dict(orient="records")
+        ]
+        policies = [Policy(**r) for r in rules]
         analyzer = PolicyAnalyzer(policies)
         # Find relations among firewall rules
         anom = analyzer.get_anomalies()
@@ -261,7 +278,7 @@ try:
             .fillna("")
         )
 
-        ## Summary Section
+        # Summary Section
 
         st.header("Summary")
         if not pdr.empty:
@@ -290,7 +307,7 @@ try:
         else:
             st.markdown(NO_RELATION)
 
-        ## Analysis Section
+        # Analysis Section
 
         # If relations are detected
         st.header("Analysis")
@@ -332,7 +349,7 @@ try:
                 st.markdown("#### Recommendation")
                 st.markdown(xy_recom)
 
-            ## Editing Section
+            # Editing Section
 
             if acode in errors or acode in warn:
                 # Offer to apply recommendation to correct errors
@@ -416,4 +433,4 @@ try:
         st.session_state.pop("packets", None)
         st.warning(UPLOAD_FILE)
 except Exception as e:
-    st.error(e)
+    st.exception(e)
