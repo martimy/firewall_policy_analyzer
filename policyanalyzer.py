@@ -55,65 +55,41 @@ class PortSet:
         return self.port_set == other.port_set
 
     def __repr__(self):
-        if self.port_set is None:
+        if self.port_set == {0}:
             return "ANY"
         elif len(self.port_set) == 1:
             return str(next(iter(self.port_set)))
         return str(self.port_set)
 
     def superset_of(self, other):
+        # IM Inclusive Match
+        if self.port_set == {0}:  # a Universal Set is a superset of any set
+            return self.port_set != other.port_set
+        # Not a Universal Set
+        if other.port_set == {0}:  #
+            return False
         return (
-            self.port_set is None and other.port_set is not None
-        ) or self.port_set.issuperset(other.port_set)
+            self.port_set.issuperset(other.port_set) and self.port_set != other.port_set
+        )
 
     def subset_of(self, other):
+        if self.port_set == {0}:  # a Universal Set is a supset only to itself
+            return False
+        # Not a Universal Set
+        if other.port_set == {0}:  #
+            return True
         return (
-            self.port_set is not None and other.port_set is None
-        ) or self.port_set.issubset(other.port_set)
+            self.port_set.issubset(other.port_set) and self.port_set != other.port_set
+        )
 
     @classmethod
     def get_port(cls, ports_string):
         if isinstance(ports_string, str) and ports_string.strip().upper() == "ANY":
-            return cls(None)
+            return cls({0})  # represents a Universal Set
         else:
             a_set = parse_ports_string(ports_string)
             ports = protocols_to_numbers(a_set, PortSet._ports)
-        return cls(set(ports))
-
-
-# # Check relationships
-# is_superset = range_set.issuperset(list_set)
-# is_subset = list_set.issubset(range_set)
-# is_disjoint = range_set.isdisjoint(list_set)
-# has_partial_overlap = not is_disjoint and not is_superset
-
-
-class Port:
-    """
-    A TCP/UDP Port
-    """
-
-    def __init__(self, port):
-        # Do not use this constructor directly, use get_port() instead
-        self.port = port
-
-    def __eq__(self, other):
-        return self.port == other.port
-
-    def __repr__(self):
-        return str(self.port)
-
-    def superset_of(self, other):
-        return self.port == 0 and other.port != 0
-
-    def subset_of(self, other):
-        return self.port != 0 and other.port == 0
-
-    @classmethod
-    def get_port(cls, port):
-        if isinstance(port, str) and port.strip().upper() == "ANY":
-            return cls(0)
-        return cls(int(port))
+        return cls(ports)
 
 
 class Protocol:
@@ -198,7 +174,7 @@ class Interface:
         return cls(interface.upper())
 
 
-def compare_fields(a, b):
+def compare_two_fields(a, b):
     """
     get relation between two policy fields
     """
@@ -265,12 +241,12 @@ class Policy(Packet):
     def compare_fields(self, other):
         # compare fields with another policy or packet
         return [
-            compare_fields(self.fields["interface"], other.fields["interface"]),
-            compare_fields(self.fields["protocol"], other.fields["protocol"]),
+            compare_two_fields(self.fields["interface"], other.fields["interface"]),
+            compare_two_fields(self.fields["protocol"], other.fields["protocol"]),
             compare_addresses(self.fields["src"], other.fields["src"]),
-            compare_fields(self.fields["sport"], other.fields["sport"]),
+            compare_two_fields(self.fields["sport"], other.fields["sport"]),
             compare_addresses(self.fields["dst"], other.fields["dst"]),
-            compare_fields(self.fields["dport"], other.fields["dport"]),
+            compare_two_fields(self.fields["dport"], other.fields["dport"]),
         ]
 
     def compare_actions(self, other):
