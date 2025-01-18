@@ -10,7 +10,7 @@ This is an application that detects patterns and conflicts in firewall policies.
 - A source port is no longer a mandatory field in the rules.
 - A source/destination port can include one or more port numbers, ranges, and/or valid port names (e.g. HTTP).
 - Action field can include: "permit", "allow", "accept", "pass", "deny", "reject", or "drop". 
-- General code improvments
+- General code improvements.
 
 ## Limitations
 
