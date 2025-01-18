@@ -23,19 +23,21 @@ import pandas as pd
 import streamlit as st
 from policyanalyzer import Policy, PolicyAnalyzer, Packet
 
-EXAMPE_RULES = """protocol,src,s_port,dst,d_port,action
-tcp,140.192.37.20,any,0.0.0.0/0,80,deny
-tcp,140.192.37.0/24,any,0.0.0.0/0,80,accept
+EXAMPE_RULES = """
+protocol,src,s_port,dst,d_port,action
+tcp,140.192.37.20,any,0.0.0.0/0,HTTP,deny
+tcp,140.192.37.0/24,any,0.0.0.0/0,"HTTP, HTTPS",accept
 tcp,0.0.0.0/0,any,161.120.33.40,80,accept
 tcp,140.192.37.0/24,any,161.120.33.40,80,deny
 tcp,140.192.37.30,any,0.0.0.0/0,21,deny
 tcp,140.192.37.0/24,any,0.0.0.0/0,21,accept
 tcp,140.192.37.0/24,any,161.120.33.40,21,accept
 tcp,0.0.0.0/0,any,0.0.0.0/0,any,deny
-udp,140.192.37.0/24,any,161.120.33.40,53,accept
+udp,140.192.37.0/24,any,161.120.33.40,DNS,accept
 udp,0.0.0.0/0,any,161.120.33.40,53,accept
 udp,140.192.38.0/24,any,161.120.35.0/24,any,accept
-udp,0.0.0.0/0,any,0.0.0.0/0,any,deny"""
+udp,0.0.0.0/0,any,0.0.0.0/0,any,deny
+"""
 
 DEF_GEN = """A rule (Y) is a generalization of a preceding rule (X) if they
 have different actions, and if rule (Y) can match all the packets that
@@ -433,4 +435,5 @@ try:
         st.session_state.pop("packets", None)
         st.warning(UPLOAD_FILE)
 except Exception as e:
-    st.exception(e)
+    st.error(e)
+    # st.exception(e) # better for debugging
