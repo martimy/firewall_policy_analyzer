@@ -4,7 +4,7 @@ The app is written in Streamlit: [![Streamlit App](https://static.streamlit.io/b
 
 This is an application that detects patterns and conflicts in firewall policies. The app aims to improve the security and performance of network firewalls by identifying and resolving policy inconsistencies. The app uses a formal model to represent firewall rules and a conflict detection algorithm to find policy conflicts. The app also provides a graphical user interface to visualize and manage firewall policies.
 
-## Summary of changes in V0.2
+## Summary of changes in v0.2
 
 - Handling of an optional policy field "interface".
 - A source port is no longer a mandatory field in the rules.
