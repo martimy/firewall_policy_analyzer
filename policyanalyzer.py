@@ -95,25 +95,18 @@ class PortSet:
         return str(self.port_set)
 
     def superset_of(self, other):
-        # IM Inclusive Match
         if self.port_set == UniversalSet:  # a Universal Set is a superset of any set
-            return self.port_set != other.port_set
-        # Not a Universal Set
-        if other.port_set == UniversalSet:  #
+            return True
+        if other.port_set == UniversalSet:
             return False
-        return (
-            self.port_set.issuperset(other.port_set) and self.port_set != other.port_set
-        )
+        return self.port_set.issuperset(other.port_set)
 
     def subset_of(self, other):
-        if self.port_set == UniversalSet:  # a Universal Set is a supset only to itself
-            return False
-        # Not a Universal Set
-        if other.port_set == UniversalSet:  #
+        if other.port_set == UniversalSet:
             return True
-        return (
-            self.port_set.issubset(other.port_set) and self.port_set != other.port_set
-        )
+        if self.port_set == UniversalSet:
+            return False
+        return self.port_set.issubset(other.port_set)
 
     @classmethod
     def get_port(cls, ports_string):
@@ -197,10 +190,10 @@ class Interface:
         return self.interface
 
     def superset_of(self, other):
-        return self.interface == ANY and other.interface != ANY
+        return self.interface == ANY
 
     def subset_of(self, other):
-        return self.interface != ANY and other.interface == ANY
+        return other.interface == ANY
 
     @classmethod
     def get_interface(cls, interface):
@@ -209,31 +202,28 @@ class Interface:
 
 def compare_two_fields(a, b):
     """
-    get relation between two policy fields
+    Get the relation between two policy fields.
     """
-    relation = RField.UNEQUAL
     if a == b:
-        relation = RField.EQUAL
-    elif a.subset_of(b):
-        relation = RField.SUBSET
-    elif a.superset_of(b):
-        relation = RField.SUPERSET
-    return relation
+        return RField.EQUAL
+    if a.subset_of(b):
+        return RField.STRICT_SUBSET if a != b else RField.SUBSET
+    if a.superset_of(b):
+        return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
+    return RField.UNEQUAL
 
 
 def compare_two_addresses(a, b):
     """
-    Get relation between two policy fields representing IP addresses
+    Get the relation between two policy fields representing IP addresses.
     """
-
-    relation = RField.UNEQUAL
     if a == b:
-        relation = RField.EQUAL
-    elif a.subnet_of(b):
-        relation = RField.SUBSET
-    elif a.supernet_of(b):
-        relation = RField.SUPERSET
-    return relation
+        return RField.EQUAL
+    if a.subnet_of(b):
+        return RField.STRICT_SUBSET if a != b else RField.SUBSET
+    if a.supernet_of(b):
+        return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
+    return RField.UNEQUAL
 
 
 class Packet:
@@ -285,30 +275,75 @@ class Policy(Packet):
     def compare_actions(self, other):
         return self.action == other.action
 
+    def is_exact_match(self, relations):
+        return all(f is RField.EQUAL for f in relations)
+
+    def is_inclusive_match_superset(self, relations):
+        condition1 = all(
+            relation in {RField.EQUAL, RField.SUPERSET, RField.STRICT_SUPERSET}
+            for relation in relations
+        )
+        condition2 = any(relation in {RField.STRICT_SUPERSET} for relation in relations)
+        return condition1 and condition2
+
+    def is_inclusive_match_subset(self, relations):
+        condition1 = all(
+            relation in {RField.EQUAL, RField.SUBSET, RField.STRICT_SUBSET}
+            for relation in relations
+        )
+        condition2 = any(relation in {RField.STRICT_SUBSET} for relation in relations)
+        return condition1 and condition2
+
+    def is_corrlated_relation(self, relations):
+        condition1 = all(
+            relation
+            in {
+                RField.EQUAL,
+                RField.SUBSET,
+                RField.SUPERSET,
+                RField.STRICT_SUBSET,
+                RField.STRICT_SUPERSET,
+            }
+            for relation in relations
+        )
+        condition2 = any(relation in {RField.STRICT_SUBSET} for relation in relations)
+        condition3 = any(relation in {RField.STRICT_SUPERSET} for relation in relations)
+        return condition1 and condition2 and condition3
+
+    def is_partial_disjoint(self, relations):
+        condition1 = any(relation in {RField.EQUAL} for relation in relations)
+        condition2 = any(relation not in {RField.EQUAL} for relation in relations)
+        return condition1 and condition2
+
+    def is_disjoint(self, relations):
+        return all(f is RField.UNEQUAL for f in relations)
+
     def get_rule_relation(self, other):
         """
-        The fields list include comparsions between corrosponding fields
-        in two rules.
-        The method returns the resulting relationship between two rule.
+        Determines the relationship between two rules based on field comparisons.
+        Returns the resulting relationship between the two rules.
         """
 
-        fields = self.compare_fields(other)
-        relation = None
-        if all(f is RField.UNEQUAL for f in fields):
-            relation = RRule.CD
-        elif all(f is RField.EQUAL for f in fields):
-            relation = RRule.EM
-        elif all(f in [RField.SUPERSET, RField.EQUAL] for f in fields):
-            relation = RRule.IMP
-        elif all(f in [RField.SUBSET, RField.EQUAL] for f in fields):
-            relation = RRule.IMB
-        elif any(f is RField.UNEQUAL for f in fields) and any(
-            f is not RField.UNEQUAL for f in fields
-        ):
-            relation = RRule.PD
-        else:
-            relation = RRule.CC
-        return relation
+        # Compare the fields of the two rules
+        relations = self.compare_fields(other)
+
+        # Map condition checks to rule relations
+        relation_checks = [
+            (self.is_exact_match, RRule.EM),  # Exact match
+            (self.is_inclusive_match_superset, RRule.IMP),  # Inclusive match (superset)
+            (self.is_inclusive_match_subset, RRule.IMB),  # Inclusive match (subset)
+            (self.is_corrlated_relation, RRule.CC),  # Correlated relation
+            (self.is_partial_disjoint, RRule.PD),  # Partial disjoint
+            (self.is_disjoint, RRule.CD),  # Completely disjoint
+        ]
+
+        # Iterate through checks and return the first match
+        for check, rule_relation in relation_checks:
+            if check(relations):
+                return rule_relation
+
+        # Unknwon if no condition matches (fallback)
+        return RRule.UN
 
     def is_match(self, packet):
         # the packet matches this policy if all fields in policy are

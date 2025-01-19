@@ -435,5 +435,5 @@ try:
         st.session_state.pop("packets", None)
         st.warning(UPLOAD_FILE)
 except Exception as e:
-    st.error(e)
-    # st.exception(e) # better for debugging
+    # st.error(e)
+    st.exception(e)  # better for debugging

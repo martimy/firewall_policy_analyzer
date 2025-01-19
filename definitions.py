@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright 2021-2022 Maen Artimy
+Copyright 2021-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ class RRule(Enum):
     Define rule relations
     """
 
+    UN = 6  # Unknown
     IMB = 5  # "IMB"  # Inclusive match (subset)
     IMP = 4  # "IMP"  # Inclusive match (superset)
     CC = 3  # "CC"  # corrolation
@@ -47,6 +48,8 @@ class RField(Enum):
     EQUAL = 1
     SUBSET = 2
     SUPERSET = 3
+    STRICT_SUBSET = 4
+    STRICT_SUPERSET = 5
 
     def __str__(self):
         return self.name
