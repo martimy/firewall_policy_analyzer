@@ -107,4 +107,5 @@ for y_rule in anom:
         col[x_rule] = relation
     relations[y_rule] = col
 
-print(relations)
+for r in relations:
+    print(relations[r])
