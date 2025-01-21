@@ -19,6 +19,43 @@ limitations under the License.
 from enum import Enum
 
 
+PROTOCOLS = [
+    "IP",
+    "ICMP",
+    "IGMP",
+    "TCP",
+    "UDP",
+    "ESP",
+    "AH",
+    "EIGRP",
+    "OSPF",
+    "GRE",
+    "IP-IN-IP",
+    "ICMPV6",
+    "SCTP",
+]
+
+PORTS = {
+    "HTTP": 80,
+    "HTTPS": 443,
+    "FTP": 20,  # and 21
+    "SSH": 22,
+    "Telnet": 23,
+    "SMTP": 25,
+    "DNS": 53,
+    "DHCP": 67,  # and 68
+    "TFTP": 69,
+    "POP3": 110,
+    "IMAP": 143,
+    "SNMP": 161,
+    "LDAP": 389,
+    "SMB": 445,
+    "NTP": 123,
+    "RDP": 3389,
+    "MySQL": 3306,
+}
+
+
 class RRule(Enum):
     """
     Define rule relations

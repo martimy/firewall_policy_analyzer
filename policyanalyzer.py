@@ -17,8 +17,9 @@ limitations under the License.
 """
 
 
+import re
 import ipaddress
-from definitions import RRule, RField, Anomaly
+from definitions import PORTS, PROTOCOLS, RRule, RField, Anomaly
 from parsing import parse_ports_string, protocols_to_numbers
 
 UniversalSet = {0}
@@ -60,26 +61,6 @@ class PortSet:
     A TCP/UDP Port
     """
 
-    _ports = {
-        "HTTP": 80,
-        "HTTPS": 443,
-        "FTP": 20,  # and 21
-        "SSH": 22,
-        "Telnet": 23,
-        "SMTP": 25,
-        "DNS": 53,
-        "DHCP": 67,  # and 68
-        "TFTP": 69,
-        "POP3": 110,
-        "IMAP": 143,
-        "SNMP": 161,
-        "LDAP": 389,
-        "SMB": 445,
-        "NTP": 123,
-        "RDP": 3389,
-        "MySQL": 3306,
-    }
-
     def __init__(self, ports):
         # Do not use this constructor directly, use get_port() instead
         self.port_set = ports
@@ -114,7 +95,7 @@ class PortSet:
             return cls(UniversalSet)  # represents a Universal Set
         else:
             a_set = parse_ports_string(ports_string)
-            ports = protocols_to_numbers(a_set, PortSet._ports)
+            ports = protocols_to_numbers(a_set, PORTS)
         return cls(ports)
 
 
@@ -122,21 +103,6 @@ class Protocol:
     """
     A Protcol
     """
-
-    _protocols = [
-        "ICMP",
-        "IGMP",
-        "TCP",
-        "UDP",
-        "ESP",
-        "AH",
-        "EIGRP",
-        "OSPF",
-        "GRE",
-        "IP-in-IP",
-        "ICMPv6",
-        "SCTP",
-    ]
 
     def __init__(self, protocol):
         # Do not use this constructor directly, use get_protocol() instead
@@ -149,15 +115,17 @@ class Protocol:
         return self.protocol
 
     def superset_of(self, other):
-        return self.protocol == "IP" and other.protocol in Protocol._protocols
+        return self.protocol == "IP" and other.protocol in PROTOCOLS
 
     def subset_of(self, other):
-        return self.protocol in Protocol._protocols and other.protocol == "IP"
+        return self.protocol in PROTOCOLS and other.protocol == "IP"
 
     @classmethod
     def get_protocol(cls, protocol):
-        protocol = "IP" if protocol.upper() == ANY else protocol
-        if protocol.upper() not in Protocol._protocols + ["IP"]:
+        if not isinstance(protocol, str):
+            raise ValueError(f"Not a recognized protocol '{protocol}'")
+        protocol = "IP" if protocol.upper() == ANY else protocol.upper()
+        if protocol not in PROTOCOLS:
             raise ValueError(f"Not a recognized protocol '{protocol}'")
         return cls(protocol)
 
@@ -197,6 +165,15 @@ class Interface:
 
     @classmethod
     def get_interface(cls, interface):
+        if not isinstance(interface, str):
+            raise ValueError(f"Not a valid interface '{interface}'")
+
+        # Validate the address
+        if not re.match(r"^[A-Za-z][A-Za-z0-9_-]*$", interface):
+            raise ValueError(
+                f"Interface '{interface}' must start with a letter and can only include letters, digits, '_' or '-'"
+            )
+
         return cls(interface.upper())
 
 
@@ -377,7 +354,7 @@ class PolicyAnalyzer:
         self.policies = policies
 
     def _get_anamoly(self, rule_relation, same_action):
-        return self.anamoly.get((rule_relation, same_action), Anomaly.AOK)
+        return PolicyAnalyzer.anamoly.get((rule_relation, same_action), Anomaly.AOK)
 
     def get_relations(self):
         # compare each policy with the previous ones
