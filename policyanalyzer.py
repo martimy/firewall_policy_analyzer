@@ -177,32 +177,6 @@ class Interface:
         return cls(interface.upper())
 
 
-def compare_two_fields(a, b):
-    """
-    Get the relation between two policy fields.
-    """
-    if a == b:
-        return RField.EQUAL
-    if a.subset_of(b):
-        return RField.STRICT_SUBSET if a != b else RField.SUBSET
-    if a.superset_of(b):
-        return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
-    return RField.UNEQUAL
-
-
-def compare_two_addresses(a, b):
-    """
-    Get the relation between two policy fields representing IP addresses.
-    """
-    if a == b:
-        return RField.EQUAL
-    if a.subnet_of(b):
-        return RField.STRICT_SUBSET if a != b else RField.SUBSET
-    if a.supernet_of(b):
-        return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
-    return RField.UNEQUAL
-
-
 class Packet:
     """
     Packet header information
@@ -238,15 +212,41 @@ class Policy(Packet):
         super().__init__(protocol, src, s_port, dst, d_port, interface=interface)
         self.action = Action.get_action(policy_fields.get("action"))
 
+    def compare_two_fields(self, a, b):
+        """
+        Get the relation between two policy fields.
+        """
+        if a == b:
+            return RField.EQUAL
+        if a.subset_of(b):
+            return RField.STRICT_SUBSET if a != b else RField.SUBSET
+        if a.superset_of(b):
+            return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
+        return RField.UNEQUAL
+
+    def compare_two_addresses(self, a, b):
+        """
+        Get the relation between two policy fields representing IP addresses.
+        """
+        if a == b:
+            return RField.EQUAL
+        if a.subnet_of(b):
+            return RField.STRICT_SUBSET if a != b else RField.SUBSET
+        if a.supernet_of(b):
+            return RField.STRICT_SUPERSET if a != b else RField.SUPERSET
+        return RField.UNEQUAL
+
     def compare_fields(self, other):
         # compare fields with another policy or packet
         return [
-            compare_two_fields(self.fields["interface"], other.fields["interface"]),
-            compare_two_fields(self.fields["protocol"], other.fields["protocol"]),
-            compare_two_addresses(self.fields["src"], other.fields["src"]),
-            compare_two_fields(self.fields["sport"], other.fields["sport"]),
-            compare_two_addresses(self.fields["dst"], other.fields["dst"]),
-            compare_two_fields(self.fields["dport"], other.fields["dport"]),
+            self.compare_two_fields(
+                self.fields["interface"], other.fields["interface"]
+            ),
+            self.compare_two_fields(self.fields["protocol"], other.fields["protocol"]),
+            self.compare_two_addresses(self.fields["src"], other.fields["src"]),
+            self.compare_two_fields(self.fields["sport"], other.fields["sport"]),
+            self.compare_two_addresses(self.fields["dst"], other.fields["dst"]),
+            self.compare_two_fields(self.fields["dport"], other.fields["dport"]),
         ]
 
     def compare_actions(self, other):
