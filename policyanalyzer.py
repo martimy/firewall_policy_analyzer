@@ -316,6 +316,7 @@ class Policy(Packet):
 
         # Iterate through checks and return the first match
         for check, rule_relation in relation_checks:
+            # call the check function
             if check(relations):
                 return rule_relation
 
@@ -366,36 +367,62 @@ class PolicyAnalyzer:
             ]
         return rule_relations
 
-    def get_a_relations(self):
+    def get_action_relations(self):
         # compare each policy action with the previous ones
-        rule_a_relations = {}
+        rule_action_relations = {}
         for y, y_policy in enumerate(self.policies):
-            rule_a_relations[y] = [
+            rule_action_relations[y] = [
                 x_policy.compare_actions(y_policy) for x_policy in self.policies[0:y]
             ]
-        return rule_a_relations
+        return rule_action_relations
+
+    # def get_anomalies(self):
+    #     anomalies = {}
+    #     rule_relations = self.get_relations()
+    #     action_relations = self.get_action_relations()
+
+    #     for ry, ry_relations in rule_relations.items():
+    #         for rx, relation in ry_relations:
+    #             anamoly = self._get_anamoly(relation, action_relations[ry][rx])
+    #             if anamoly is Anomaly.RXD:
+    #                 # check the rules in between for additional conditions
+    #                 for rz in range(rx + 1, ry):
+    #                     if any(
+    #                         a == rx
+    #                         and not action_relations[rz][rx]
+    #                         and b in [RRule.CC, RRule.IMB]
+    #                         for a, b in rule_relations[rz]
+    #                     ):
+    #                         anamoly = Anomaly.AOK
+    #                         break
+    #             if anamoly is not Anomaly.AOK:
+    #                 anomalies.setdefault(ry, []).append((rx, anamoly))
+    #     return anomalies
 
     def get_anomalies(self):
         anomalies = {}
         rule_relations = self.get_relations()
-        a_relations = self.get_a_relations()
+        action_relations = self.get_action_relations()
 
-        for ry, ry_relations in rule_relations.items():
-            for rx, relation in ry_relations:
-                anamoly = self._get_anamoly(relation, a_relations[ry][rx])
-                if anamoly is Anomaly.RXD:
-                    # check the rules in between for additional conditions
-                    for rz in range(rx + 1, ry):
+        for y_rule, y_relations in rule_relations.items():
+            for x_rule, relation in y_relations:
+                anomaly = self._get_anamoly(relation, action_relations[y_rule][x_rule])
+
+                if anomaly is Anomaly.RXD:
+                    # Check intermediate rules for additional conditions
+                    for intermediate_rule in range(x_rule + 1, y_rule):
                         if any(
-                            a == rx
-                            and not a_relations[rz][rx]
-                            and b in [RRule.CC, RRule.IMB]
-                            for a, b in rule_relations[rz]
+                            src == x_rule
+                            and not action_relations[intermediate_rule][x_rule]
+                            and rel in [RRule.CC, RRule.IMB]
+                            for src, rel in rule_relations[intermediate_rule]
                         ):
-                            anamoly = Anomaly.AOK
+                            anomaly = Anomaly.AOK
                             break
-                if anamoly is not Anomaly.AOK:
-                    anomalies.setdefault(ry, []).append((rx, anamoly))
+
+                if anomaly is not Anomaly.AOK:
+                    anomalies.setdefault(y_rule, []).append((x_rule, anomaly))
+
         return anomalies
 
     def get_first_match(self, packet):
