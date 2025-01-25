@@ -26,19 +26,26 @@ import os
 from policyanalyzer import Policy, PolicyAnalyzer, Packet
 
 
-def policies_st(policies):
-    print("=" * 50)
-    print("Policies:")
+def display_rules(policies):
+    print("=" * 70)
+    print("Rules:")
+    print("=" * 70)
 
     for n, p in enumerate(policies):
         print(f"{n:3}: {p}")
 
+    print()
 
-def anomalies_st(anomalies):
-    print("=" * 50)
+
+def display_patterns(anomalies):
+    print("=" * 70)
     print("Patterns:")
+    print("=" * 70)
+
     for i in anomalies:
         print(f"{i:3}: {anom[i]}")
+
+    print()
 
 
 def read_csv_to_dict(file_path):
@@ -73,12 +80,13 @@ analyzer = PolicyAnalyzer(policies)
 rule_relations = analyzer.get_relations()
 anom = analyzer.get_anomalies()
 
-policies_st(policies)
-anomalies_st(anom)
+display_rules(policies)
+display_patterns(anom)
 
 
-print("=" * 50)
+print("=" * 70)
 print("Matches:")
+print("=" * 70)
 
 for packet in [
     Packet("tcp", "192.168.1.4", "ANY", "172.16.16.1", "80"),
@@ -92,9 +100,12 @@ for packet in [
         print("has a match:")
         print(result)
 
+print()
 
 ####
-print("\nRelations")
+print("=" * 70)
+print("Relations")
+print("=" * 70)
 num = len(reader)
 relations = {}  # cols
 for y_rule in anom:
